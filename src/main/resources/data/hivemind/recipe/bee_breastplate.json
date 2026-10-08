@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "H": "minecraft:honeycomb",
+    "J": "hivemind:royal_jelly"
+  },
+  "pattern": [
+    "H H",
+    "HJH",
+    "HHH"
+  ],
+  "result": {
+    "id": "hivemind:bee_breastplate"
+  }
+}

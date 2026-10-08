@@ -1,0 +1,7 @@
+{
+  "entity.queen_bee.babble.a": { "subtitle": "subtitles.hivemind.queen_bee.babble", "sounds": ["hivemind:queen/babble_a"] },
+  "entity.queen_bee.babble.e": { "subtitle": "subtitles.hivemind.queen_bee.babble", "sounds": ["hivemind:queen/babble_e"] },
+  "entity.queen_bee.babble.i": { "subtitle": "subtitles.hivemind.queen_bee.babble", "sounds": ["hivemind:queen/babble_i"] },
+  "entity.queen_bee.babble.o": { "subtitle": "subtitles.hivemind.queen_bee.babble", "sounds": ["hivemind:queen/babble_o"] },
+  "entity.queen_bee.babble.u": { "subtitle": "subtitles.hivemind.queen_bee.babble", "sounds": ["hivemind:queen/babble_u"] }
+}

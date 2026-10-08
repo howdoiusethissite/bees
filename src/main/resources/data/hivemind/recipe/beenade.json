@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "S": "minecraft:string",
+    "C": "minecraft:honeycomb",
+    "G": "minecraft:gunpowder",
+    "H": "minecraft:honey_bottle"
+  },
+  "pattern": [
+    " S ",
+    "CGC",
+    " H "
+  ],
+  "result": {
+    "id": "hivemind:beenade",
+    "count": 2
+  }
+}

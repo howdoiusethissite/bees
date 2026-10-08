@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:honeycomb",
+    "minecraft:sugar",
+    "minecraft:honey_bottle"
+  ],
+  "result": {
+    "id": "hivemind:honeycomb_candy",
+    "count": 4
+  }
+}

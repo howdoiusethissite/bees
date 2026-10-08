@@ -1,5 +1,6 @@
 package com.hivemind.world;
 
+import com.hivemind.block.BroodCellBlock;
 import com.hivemind.entity.GuardBee;
 import com.hivemind.entity.QueenBee;
 import com.hivemind.registry.ModBlocks;
@@ -23,6 +24,8 @@ import net.minecraft.world.level.block.state.BlockState;
  */
 public final class HiveInteriorBuilder {
 	public static final String RESIDENT_TAG = "hivemind.resident";
+	/** Bump this when adding something to the interior, and add the step to {@link #upgrade}. */
+	public static final int LAYOUT_VERSION = 2;
 	private static final int FLAGS = Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE;
 	private static final int WORKER_BEES = 10;
 	private static final int GUARD_BEES = 6;
@@ -37,6 +40,13 @@ public final class HiveInteriorBuilder {
 	private HiveInteriorBuilder() {
 	}
 
+	/** Adds whatever newer layouts have that this hive, built with an older one, is missing. */
+	public static void upgrade(final ServerLevel level, final int index, final int fromVersion) {
+		if (fromVersion < 2) {
+			buildNursery(level, index);
+		}
+	}
+
 	public static void build(final ServerLevel level, final int index) {
 		BlockPos c = HiveLayout.center(index);
 		buildShellAndFloor(level, c);
@@ -44,7 +54,49 @@ public final class HiveInteriorBuilder {
 		buildHangingCombs(level, c);
 		buildDais(level, c);
 		buildExit(level, index);
+		buildNursery(level, index);
 		spawnResidents(level, index);
+	}
+
+	/**
+	 * Four patches of brood cells set into the floor between the pillars, two on each side of the
+	 * walkway. Each cell starts at a random stage; some already need looking after.
+	 */
+	public static void buildNursery(final ServerLevel level, final int index) {
+		BlockPos c = HiveLayout.center(index);
+		int floorY = HiveLayout.floorY();
+		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+		BroodCellBlock.Need[] needs = BroodCellBlock.Need.values();
+		// These angles fall in the gaps between the comb pillars.
+		for (int degrees : new int[] {30, 150, 210, 330}) {
+			double angle = Math.toRadians(degrees);
+			int px = c.getX() + Mth.floor(Math.cos(angle) * 10.5 + 0.5);
+			int pz = c.getZ() + Mth.floor(Math.sin(angle) * 10.5 + 0.5);
+			for (int dx = -1; dx <= 1; dx++) {
+				for (int dz = -1; dz <= 1; dz++) {
+					// Trim two opposite corners so the patch reads as a little hexagon.
+					if (dx == dz && dx != 0) {
+						continue;
+					}
+					int x = px + dx;
+					int z = pz + dz;
+					pos.set(x, floorY, z);
+					int stage = (int)(noise(x, floorY, z, 8) * (BroodCellBlock.CAPPED + 1));
+					BroodCellBlock.Need need = stage == BroodCellBlock.CAPPED ? BroodCellBlock.Need.NONE : needs[(int)(noise(x, floorY, z, 9) * needs.length)];
+					if (stage == BroodCellBlock.EGG && need == BroodCellBlock.Need.HUNGRY) {
+						need = BroodCellBlock.Need.LONELY;
+					}
+					level.setBlock(pos, ModBlocks.BROOD_CELL.defaultBlockState().setValue(BroodCellBlock.STAGE, stage).setValue(BroodCellBlock.NEED, need), FLAGS);
+					// Clear anything sitting on top (a stray potted flower) so the cell can be reached.
+					level.setBlock(pos.move(0, 1, 0), Blocks.AIR.defaultBlockState(), FLAGS);
+				}
+			}
+			// A candle at the edge of each patch to keep the babies warm.
+			BlockState candle = Blocks.DYED_CANDLE.orange().defaultBlockState().setValue(CandleBlock.CANDLES, 2).setValue(CandleBlock.LIT, true);
+			int cx = px + Mth.floor(Math.cos(angle) * 2.5 + 0.5);
+			int cz = pz + Mth.floor(Math.sin(angle) * 2.5 + 0.5);
+			level.setBlock(pos.set(cx, floorY + 1, cz), candle, FLAGS);
+		}
 	}
 
 	private static double shell(final double dx, final double dy, final double dz, final int shrink) {

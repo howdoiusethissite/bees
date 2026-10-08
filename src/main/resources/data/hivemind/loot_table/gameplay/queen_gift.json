@@ -37,6 +37,23 @@
           "type": "minecraft:item",
           "name": "hivemind:shrinking_honey",
           "weight": 5
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hivemind:beenade",
+          "weight": 10,
+          "modifier": { "type": "minecraft:set_count", "count": { "type": "minecraft:uniform", "min": 2, "max": 4 } }
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hivemind:royal_jelly",
+          "weight": 8
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hivemind:honeycomb_candy",
+          "weight": 8,
+          "modifier": { "type": "minecraft:set_count", "count": { "type": "minecraft:uniform", "min": 2, "max": 4 } }
         }
       ]
     }

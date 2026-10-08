@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "hivemind:item/bee_multitool_shovel"
+  }
+}

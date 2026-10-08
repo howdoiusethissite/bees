@@ -24,11 +24,17 @@ import net.minecraft.world.phys.Vec3;
  * plus where each player should be sent back to when they leave a hive.
  */
 public class HiveData extends SavedData {
-	public record Hive(int index, ResourceKey<Level> originLevel, BlockPos originPos) {
+	/**
+	 * @param version which interior layout this hive was built with. Older hives get the newer
+	 *                features added the next time someone goes in; see {@link HiveInteriorBuilder#upgrade}.
+	 */
+	public record Hive(int index, ResourceKey<Level> originLevel, BlockPos originPos, int version) {
 		public static final Codec<Hive> CODEC = RecordCodecBuilder.create(i -> i.group(
 				Codec.INT.fieldOf("index").forGetter(Hive::index),
 				Level.RESOURCE_KEY_CODEC.fieldOf("origin_level").forGetter(Hive::originLevel),
-				BlockPos.CODEC.fieldOf("origin_pos").forGetter(Hive::originPos)
+				BlockPos.CODEC.fieldOf("origin_pos").forGetter(Hive::originPos),
+				// Hives saved before versions existed are version 1.
+				Codec.INT.optionalFieldOf("version", 1).forGetter(Hive::version)
 			).apply(i, Hive::new));
 	}
 
@@ -74,7 +80,7 @@ public class HiveData extends SavedData {
 				return hive;
 			}
 		}
-		Hive hive = new Hive(this.hives.size(), level, pos.immutable());
+		Hive hive = new Hive(this.hives.size(), level, pos.immutable(), HiveInteriorBuilder.LAYOUT_VERSION);
 		this.hives.add(hive);
 		this.setDirty();
 		created[0] = true;
@@ -83,6 +89,14 @@ public class HiveData extends SavedData {
 
 	public Optional<Hive> byIndex(final int index) {
 		return index >= 0 && index < this.hives.size() ? Optional.of(this.hives.get(index)) : Optional.empty();
+	}
+
+	/** Records that a hive's interior has been brought up to the current layout. */
+	public Hive markUpgraded(final Hive hive) {
+		Hive upgraded = new Hive(hive.index(), hive.originLevel(), hive.originPos(), HiveInteriorBuilder.LAYOUT_VERSION);
+		this.hives.set(hive.index(), upgraded);
+		this.setDirty();
+		return upgraded;
 	}
 
 	public List<Hive> hives() {

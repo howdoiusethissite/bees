@@ -1,6 +1,7 @@
 package com.hivemind.registry;
 
 import com.hivemind.Hivemind;
+import com.hivemind.block.BroodCellBlock;
 import com.hivemind.block.HiveExitBlock;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
@@ -23,6 +24,15 @@ public final class ModBlocks {
 			.noLootTable()
 			.lightLevel(state -> 12)
 			.sound(SoundType.CORAL_BLOCK)
+	);
+
+	public static final ResourceKey<Block> BROOD_CELL_KEY = ResourceKey.create(Registries.BLOCK, Hivemind.id("brood_cell"));
+
+	/** A nursery cell with a baby bee growing in it. Look after it and it hatches. */
+	public static final Block BROOD_CELL = Blocks.register(
+		BROOD_CELL_KEY,
+		BroodCellBlock::new,
+		BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_ORANGE).strength(0.6F).noLootTable().randomTicks().sound(SoundType.CORAL_BLOCK)
 	);
 
 	private ModBlocks() {

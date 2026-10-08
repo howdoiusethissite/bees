@@ -1,6 +1,7 @@
 package com.hivemind.entity;
 
 import com.hivemind.Hivemind;
+import com.hivemind.network.QueenSpeechPayload;
 import com.hivemind.world.HiveEvents;
 import com.hivemind.world.HiveLayout;
 import com.hivemind.world.HiveRaids;
@@ -8,13 +9,16 @@ import com.mojang.serialization.Codec;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -53,8 +57,16 @@ public class QueenBee extends PathfinderMob {
 	private static final int FAVOR_PER_EXTRA_ROLL = 15;
 	private static final int MAX_GIFT_ROLLS = 3;
 
+	/** How many lines the queen has for each occasion. Lines live in the lang file as {@code queen.hivemind.<topic>.<n>}. */
+	private static final Map<String, Integer> LINES = Map.of(
+		"greet", 5, "flower", 5, "gift", 4, "angry", 3, "idle", 6, "cocoon", 4, "raid_start", 3, "raid_won", 3, "raid_lost", 3
+	);
+	private static final double SPEECH_RANGE = 24.0;
+	private static final double IDLE_CHAT_RANGE = 8.0;
+
 	private final Map<UUID, Integer> favor = new HashMap<>();
 	private final Map<UUID, Long> lastGift = new HashMap<>();
+	private int idleChatCooldown = 20 * 20;
 
 	public QueenBee(final EntityType<? extends QueenBee> type, final Level level) {
 		super(type, level);
@@ -95,7 +107,7 @@ public class QueenBee extends PathfinderMob {
 
 		if (held.isEmpty() && hand == InteractionHand.MAIN_HAND) {
 			if (!this.level().isClientSide()) {
-				player.sendOverlayMessage(Component.translatable("message.hivemind.queen_favor", this.getFavor(player)).withStyle(ChatFormatting.GOLD));
+				this.say(player, "greet", this.getFavor(player));
 			}
 			return InteractionResult.SUCCESS;
 		}
@@ -119,9 +131,9 @@ public class QueenBee extends PathfinderMob {
 			for (int i = 0; i < rolls; i++) {
 				this.giveGift(level, player, GIFT_LOOT);
 			}
-			player.sendOverlayMessage(Component.translatable("message.hivemind.queen_gift", favor).withStyle(ChatFormatting.GOLD));
+			this.say(player, "gift", favor);
 		} else {
-			player.sendOverlayMessage(Component.translatable("message.hivemind.queen_flower", favor).withStyle(ChatFormatting.YELLOW));
+			this.say(player, "flower", favor);
 		}
 	}
 
@@ -156,7 +168,8 @@ public class QueenBee extends PathfinderMob {
 			if (!player.isCreative()) {
 				// Nobody lays a hand on the queen.
 				HiveEvents.angerHive(level, player);
-				player.sendOverlayMessage(Component.translatable("message.hivemind.queen_hit").withStyle(ChatFormatting.RED));
+				player.sendSystemMessage(Component.translatable("message.hivemind.queen_hit").withStyle(ChatFormatting.RED));
+				this.say(player, "angry", -1);
 				return false;
 			}
 			return super.hurtServer(level, source, damage);
@@ -169,9 +182,48 @@ public class QueenBee extends PathfinderMob {
 		return capped > 0.0F && super.hurtServer(level, source, capped);
 	}
 
+	/**
+	 * Has the queen say a random line about {@code topic}. Everyone nearby hears her babble; the line
+	 * itself is shown to {@code listener}, or to everyone nearby if there is no particular listener.
+	 * Players without the mod installed just get the line as text.
+	 */
+	public void say(final @Nullable Player listener, final String topic, final int favor) {
+		if (!(this.level() instanceof ServerLevel level)) {
+			return;
+		}
+		String key = "queen.hivemind." + topic + "." + this.random.nextInt(LINES.getOrDefault(topic, 1));
+		for (ServerPlayer player : level.players()) {
+			if (player.distanceToSqr(this) > SPEECH_RANGE * SPEECH_RANGE) {
+				continue;
+			}
+			boolean addressed = listener == null || listener == player;
+			if (ServerPlayNetworking.canSend(player, QueenSpeechPayload.TYPE)) {
+				ServerPlayNetworking.send(player, new QueenSpeechPayload(this.getId(), key, addressed, addressed ? favor : -1));
+			} else if (addressed) {
+				MutableComponent line = Component.translatable("queen.hivemind.speaker", Component.translatable(key)).withStyle(ChatFormatting.GOLD);
+				if (favor >= 0) {
+					line.append(Component.translatable("queen.hivemind.favor", favor).withStyle(ChatFormatting.GRAY));
+				}
+				player.sendOverlayMessage(line);
+			}
+		}
+		this.idleChatCooldown = Math.max(this.idleChatCooldown, 20 * 15);
+	}
+
+	public void say(final @Nullable Player listener, final String topic) {
+		this.say(listener, topic, -1);
+	}
+
 	@Override
 	protected void customServerAiStep(final ServerLevel level) {
 		super.customServerAiStep(level);
+		if (--this.idleChatCooldown <= 0) {
+			this.idleChatCooldown = 20 * (40 + this.random.nextInt(50));
+			Player near = level.getNearestPlayer(this, IDLE_CHAT_RANGE);
+			if (near != null && !near.isSpectator() && !HiveRaids.isRaidActive(HiveLayout.indexAt(this.position()))) {
+				this.say(near, "idle");
+			}
+		}
 		if (this.tickCount % 40 == 0 && this.getHealth() < this.getMaxHealth() && !HiveRaids.isRaidActive(HiveLayout.indexAt(this.position()))) {
 			this.heal(2.0F);
 		}

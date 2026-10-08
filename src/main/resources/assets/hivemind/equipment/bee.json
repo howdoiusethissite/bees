@@ -1,0 +1,19 @@
+{
+  "layers": {
+    "humanoid": [
+      {
+        "texture": "hivemind:bee"
+      }
+    ],
+    "humanoid_baby": [
+      {
+        "texture": "hivemind:bee"
+      }
+    ],
+    "humanoid_leggings": [
+      {
+        "texture": "hivemind:bee"
+      }
+    ]
+  }
+}
