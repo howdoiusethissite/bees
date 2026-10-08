@@ -1,0 +1,23 @@
+{
+  "itemGroup.hivemind": "Hivemind",
+  "item.hivemind.shrinking_honey": "Shrinking Honey",
+  "item.hivemind.guard_bee_spawn_egg": "Guard Bee Spawn Egg",
+  "item.hivemind.queen_bee_spawn_egg": "Queen Bee Spawn Egg",
+  "block.hivemind.hive_exit": "Hive Exit",
+  "entity.hivemind.guard_bee": "Guard Bee",
+  "entity.hivemind.queen_bee": "Queen Bee",
+  "effect.hivemind.shrunk": "Shrunk",
+  "bossbar.hivemind.raid": "Hive Raid",
+  "message.hivemind.entered": "You squeeze into the hive. The bees watch you closely...",
+  "message.hivemind.no_building": "The bees won't let you build in their hive.",
+  "message.hivemind.no_breaking": "You damaged the hive! The guards are coming for you!",
+  "message.hivemind.queen_hit": "You struck the Queen! The whole hive turns on you!",
+  "message.hivemind.queen_favor": "The Queen's favor toward you: %s",
+  "message.hivemind.queen_flower": "The Queen accepts your flower. (Favor: %s)",
+  "message.hivemind.queen_gift": "The Queen is delighted and gives you a gift! (Favor: %s)",
+  "message.hivemind.raid_start": "The hive is under attack! Protect the Queen!",
+  "message.hivemind.raid_won": "The raiders are gone. The Queen rewards you for defending the hive.",
+  "message.hivemind.raid_lost": "The Queen is badly hurt and the raiders escaped with honey...",
+  "commands.hivemind.not_in_hive": "You need to be inside a hive.",
+  "commands.hivemind.raid_failed": "A raid is already underway, or there is no queen here."
+}

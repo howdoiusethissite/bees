@@ -1,0 +1,13 @@
+{
+	"schemaVersion": 1,
+	"id": "hivemind-gametest",
+	"version": "1.0.0",
+	"name": "Hivemind Game Tests",
+	"environment": "*",
+	"entrypoints": {
+		"fabric-client-gametest": ["com.hivemind.test.HiveClientGameTest"]
+	},
+	"depends": {
+		"hivemind": "*"
+	}
+}
