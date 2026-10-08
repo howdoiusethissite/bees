@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "hivemind:item/guard_bee_spawn_egg"
+  }
+}

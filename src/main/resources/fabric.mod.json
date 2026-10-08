@@ -1,0 +1,20 @@
+{
+	"schemaVersion": 1,
+	"id": "hivemind",
+	"version": "${version}",
+	"name": "Hivemind",
+	"description": "Shrink down and visit the inside of a beehive. Meet the queen.",
+	"authors": ["howdoiusethissite"],
+	"license": "MIT",
+	"environment": "*",
+	"entrypoints": {
+		"main": ["com.hivemind.Hivemind"],
+		"client": ["com.hivemind.client.HivemindClient"]
+	},
+	"depends": {
+		"fabricloader": ">=0.19.5",
+		"minecraft": "~26.3",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}

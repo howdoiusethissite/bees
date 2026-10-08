@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:entity",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:honeycomb",
+          "modifier": { "type": "minecraft:set_count", "count": { "type": "minecraft:uniform", "min": 0, "max": 2 } }
+        }
+      ]
+    }
+  ],
+  "random_sequence": "hivemind:entities/guard_bee"
+}

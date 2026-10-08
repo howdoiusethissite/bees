@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:honey_bottle",
+    "minecraft:fermented_spider_eye",
+    "minecraft:glowstone_dust"
+  ],
+  "result": {
+    "id": "hivemind:shrinking_honey"
+  }
+}
