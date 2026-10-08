@@ -14,6 +14,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -56,6 +57,10 @@ public final class ModItems {
 
 	public static final Item BEENADE = register("beenade", BeenadeItem::new, new Item.Properties().stacksTo(16).rarity(Rarity.UNCOMMON));
 	public static final Item BROOD_CELL = register("brood_cell", p -> new BlockItem(ModBlocks.BROOD_CELL, p), new Item.Properties().useBlockDescriptionPrefix());
+
+	public static final Item HONEY_BUCKET = register(
+		"honey_bucket", p -> new BucketItem(ModFluids.HONEY, p), new Item.Properties().craftRemainder(Items.BUCKET).stacksTo(1)
+	);
 
 	// Honey food.
 	public static final Item ROYAL_JELLY = register(
@@ -119,6 +124,7 @@ public final class ModItems {
 			.displayItems((params, output) -> {
 				output.accept(SHRINKING_HONEY);
 				output.accept(BEENADE);
+				output.accept(HONEY_BUCKET);
 				output.accept(ROYAL_JELLY);
 				output.accept(HONEY_TOAST);
 				output.accept(HONEYED_APPLE);

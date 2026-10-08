@@ -1,16 +1,20 @@
 package com.hivemind;
 
 import com.hivemind.network.QueenSpeechPayload;
+import com.hivemind.registry.ModAttachments;
 import com.hivemind.registry.ModBlocks;
 import com.hivemind.registry.ModComponents;
 import com.hivemind.registry.ModEffects;
 import com.hivemind.registry.ModEntities;
+import com.hivemind.registry.ModFluids;
 import com.hivemind.registry.ModItems;
 import com.hivemind.registry.ModSounds;
 import com.hivemind.world.BeeArmor;
+import com.hivemind.world.BeeEscorts;
 import com.hivemind.world.BeeSwarms;
 import com.hivemind.world.HiveCommands;
 import com.hivemind.world.HiveEvents;
+import com.hivemind.world.HoneyEvents;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.minecraft.resources.Identifier;
@@ -31,6 +35,8 @@ public class Hivemind implements ModInitializer {
 		ModEffects.init();
 		ModSounds.init();
 		ModComponents.init();
+		ModAttachments.init();
+		ModFluids.init();
 		ModBlocks.init();
 		ModEntities.init();
 		ModItems.init();
@@ -40,5 +46,7 @@ public class Hivemind implements ModInitializer {
 		HiveCommands.init();
 		BeeSwarms.init();
 		BeeArmor.init();
+		BeeEscorts.init();
+		HoneyEvents.init();
 	}
 }

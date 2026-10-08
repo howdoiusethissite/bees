@@ -25,7 +25,7 @@ import net.minecraft.world.level.block.state.BlockState;
 public final class HiveInteriorBuilder {
 	public static final String RESIDENT_TAG = "hivemind.resident";
 	/** Bump this when adding something to the interior, and add the step to {@link #upgrade}. */
-	public static final int LAYOUT_VERSION = 2;
+	public static final int LAYOUT_VERSION = 3;
 	private static final int FLAGS = Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE;
 	private static final int WORKER_BEES = 10;
 	private static final int GUARD_BEES = 6;
@@ -45,6 +45,9 @@ public final class HiveInteriorBuilder {
 		if (fromVersion < 2) {
 			buildNursery(level, index);
 		}
+		if (fromVersion < 3) {
+			buildHoneySpring(level, index);
+		}
 	}
 
 	public static void build(final ServerLevel level, final int index) {
@@ -55,6 +58,7 @@ public final class HiveInteriorBuilder {
 		buildDais(level, c);
 		buildExit(level, index);
 		buildNursery(level, index);
+		buildHoneySpring(level, index);
 		spawnResidents(level, index);
 	}
 
@@ -67,35 +71,66 @@ public final class HiveInteriorBuilder {
 		int floorY = HiveLayout.floorY();
 		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 		BroodCellBlock.Need[] needs = BroodCellBlock.Need.values();
-		// These angles fall in the gaps between the comb pillars.
-		for (int degrees : new int[] {30, 150, 210, 330}) {
-			double angle = Math.toRadians(degrees);
-			int px = c.getX() + Mth.floor(Math.cos(angle) * 10.5 + 0.5);
-			int pz = c.getZ() + Mth.floor(Math.sin(angle) * 10.5 + 0.5);
+		for (BlockPos patch : HiveLayout.nurseryCenters(index)) {
+			int px = patch.getX();
+			int pz = patch.getZ();
 			for (int dx = -1; dx <= 1; dx++) {
 				for (int dz = -1; dz <= 1; dz++) {
-					// Trim two opposite corners so the patch reads as a little hexagon.
-					if (dx == dz && dx != 0) {
+					if (!HiveLayout.isNurseryCell(dx, dz)) {
 						continue;
 					}
 					int x = px + dx;
 					int z = pz + dz;
 					pos.set(x, floorY, z);
-					int stage = (int)(noise(x, floorY, z, 8) * (BroodCellBlock.CAPPED + 1));
-					BroodCellBlock.Need need = stage == BroodCellBlock.CAPPED ? BroodCellBlock.Need.NONE : needs[(int)(noise(x, floorY, z, 9) * needs.length)];
-					if (stage == BroodCellBlock.EGG && need == BroodCellBlock.Need.HUNGRY) {
-						need = BroodCellBlock.Need.LONELY;
+					if (noise(x, floorY, z, 10) < 0.15) {
+						// A few cells start out empty, waiting for the queen to lay in them.
+						level.setBlock(pos, ModBlocks.EMPTY_BROOD_CELL.defaultBlockState(), FLAGS);
+					} else {
+						int stage = (int)(noise(x, floorY, z, 8) * (BroodCellBlock.CAPPED + 1));
+						BroodCellBlock.Need need = stage == BroodCellBlock.CAPPED ? BroodCellBlock.Need.NONE : needs[(int)(noise(x, floorY, z, 9) * needs.length)];
+						if (stage == BroodCellBlock.EGG && need == BroodCellBlock.Need.HUNGRY) {
+							need = BroodCellBlock.Need.LONELY;
+						}
+						level.setBlock(pos, ModBlocks.BROOD_CELL.defaultBlockState().setValue(BroodCellBlock.STAGE, stage).setValue(BroodCellBlock.NEED, need), FLAGS);
 					}
-					level.setBlock(pos, ModBlocks.BROOD_CELL.defaultBlockState().setValue(BroodCellBlock.STAGE, stage).setValue(BroodCellBlock.NEED, need), FLAGS);
 					// Clear anything sitting on top (a stray potted flower) so the cell can be reached.
 					level.setBlock(pos.move(0, 1, 0), Blocks.AIR.defaultBlockState(), FLAGS);
 				}
 			}
 			// A candle at the edge of each patch to keep the babies warm.
 			BlockState candle = Blocks.DYED_CANDLE.orange().defaultBlockState().setValue(CandleBlock.CANDLES, 2).setValue(CandleBlock.LIT, true);
+			double angle = Math.atan2(pz - c.getZ(), px - c.getX());
 			int cx = px + Mth.floor(Math.cos(angle) * 2.5 + 0.5);
 			int cz = pz + Mth.floor(Math.sin(angle) * 2.5 + 0.5);
 			level.setBlock(pos.set(cx, floorY + 1, cz), candle, FLAGS);
+		}
+	}
+
+	/**
+	 * A small pool of liquid honey set into the floor behind the throne. Standing in it heals you,
+	 * which comes in handy during a raid, and you can bottle it.
+	 */
+	public static void buildHoneySpring(final ServerLevel level, final int index) {
+		BlockPos spring = HiveLayout.honeySpring(index);
+		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+		BlockState honey = ModBlocks.HONEY.defaultBlockState();
+		for (int dx = -3; dx <= 3; dx++) {
+			for (int dz = -3; dz <= 3; dz++) {
+				double hd = hexDistance(dx, dz);
+				if (hd > 2.6) {
+					continue;
+				}
+				pos.set(spring.getX() + dx, spring.getY(), spring.getZ() + dz);
+				if (hd <= 1.8) {
+					level.setBlock(pos, honey, FLAGS);
+					// Make sure it has a floor and nothing on top.
+					level.setBlock(pos.move(0, -1, 0), COMB, FLAGS);
+					level.setBlock(pos.move(0, 2, 0), Blocks.AIR.defaultBlockState(), FLAGS);
+				} else {
+					// A rim of honey blocks around the edge.
+					level.setBlock(pos, HONEY, FLAGS);
+				}
+			}
 		}
 	}
 

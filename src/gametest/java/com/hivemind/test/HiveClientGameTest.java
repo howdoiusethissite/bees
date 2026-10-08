@@ -181,7 +181,10 @@ public class HiveClientGameTest implements FabricClientGameTest {
 
 			// Look after a baby bee in the nursery: feed the hungry one, pat the lonely one.
 			BlockPos cell = new BlockPos(c.getX() + 9, HiveLayout.floorY(), c.getZ() + 5);
-			check(server.computeOnServer(s -> hiveLevel(s).getBlockState(cell).is(ModBlocks.BROOD_CELL)), "nursery should have brood cells");
+			check(
+				server.computeOnServer(s -> hiveLevel(s).getBlockState(cell).is(ModBlocks.BROOD_CELL) || hiveLevel(s).getBlockState(cell).is(ModBlocks.EMPTY_BROOD_CELL)),
+				"nursery should have brood cells"
+			);
 			setCell(server, cell, 1, BroodCellBlock.Need.HUNGRY);
 			server.runCommand("item replace entity @p weapon.mainhand with minecraft:honey_bottle");
 			aim(server, cell.getX() + 0.5, cell.getY() + 1, cell.getZ() + 3.5, cell.getX() + 0.5, cell.getY() + 1.0, cell.getZ() + 0.5);
@@ -207,11 +210,11 @@ public class HiveClientGameTest implements FabricClientGameTest {
 
 			int babiesBefore = babyBees(server);
 			server.runOnServer(s -> {
-				for (int i = 0; i < 64 && hiveLevel(s).getBlockState(cell).getValue(BroodCellBlock.STAGE) == BroodCellBlock.CAPPED; i++) {
+				for (int i = 0; i < 64 && hiveLevel(s).getBlockState(cell).is(ModBlocks.BROOD_CELL); i++) {
 					hiveLevel(s).getBlockState(cell).randomTick(hiveLevel(s), cell, hiveLevel(s).getRandom());
 				}
 			});
-			check(cellState(server, cell).getValue(BroodCellBlock.STAGE) == BroodCellBlock.EGG, "a capped cell should hatch and get a new egg");
+			check(cellState(server, cell).is(ModBlocks.EMPTY_BROOD_CELL), "a capped cell should hatch and be left empty for the queen");
 			check(babyBees(server) > babiesBefore, "hatching should release a baby bee");
 
 			// A portrait of the nursery with cells in every state.

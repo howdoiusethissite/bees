@@ -2,6 +2,7 @@ package com.hivemind.world;
 
 import com.hivemind.Hivemind;
 import com.hivemind.registry.ModEffects;
+import java.util.List;
 import java.util.Optional;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -10,6 +11,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.animal.bee.Bee;
 import net.minecraft.world.level.portal.TeleportTransition;
 import net.minecraft.world.phys.Vec3;
 
@@ -44,7 +46,9 @@ public final class HiveTravel {
 		fromLevel.playSound(null, hivePos, SoundEvents.BEEHIVE_ENTER, SoundSource.BLOCKS, 1.0F, 1.0F);
 
 		Vec3 arrival = HiveLayout.arrivalPos(hive.index());
+		List<Bee> followers = BeeEscorts.nearbyFollowers(fromLevel, player);
 		player.teleport(new TeleportTransition(hiveLevel, arrival, Vec3.ZERO, 180.0F, 0.0F, TeleportTransition.DO_NOTHING));
+		BeeEscorts.bringAlong(followers, player);
 		hiveLevel.playSound(null, BlockPos.containing(arrival), SoundEvents.BEEHIVE_WORK, SoundSource.BLOCKS, 1.0F, 1.0F);
 		player.sendOverlayMessage(Component.translatable("message.hivemind.entered").withStyle(ChatFormatting.GOLD));
 	}
@@ -57,7 +61,9 @@ public final class HiveTravel {
 				return level == null ? null : new TeleportTransition(level, p.pos(), Vec3.ZERO, p.yRot(), 0.0F, TeleportTransition.DO_NOTHING);
 			})
 			.orElseGet(() -> player.findRespawnPositionAndUseSpawnBlock(false, TeleportTransition.DO_NOTHING));
+		List<Bee> followers = BeeEscorts.nearbyFollowers(player.level(), player);
 		player.teleport(transition);
+		BeeEscorts.bringAlong(followers, player);
 		transition.newLevel().playSound(null, BlockPos.containing(transition.position()), SoundEvents.BEEHIVE_EXIT, SoundSource.BLOCKS, 1.0F, 1.0F);
 	}
 }

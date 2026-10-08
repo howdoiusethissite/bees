@@ -864,6 +864,134 @@ def brood_cells():
     side()
 
 
+def empty_brood_cell():
+    """The top of a nursery cell after its bee has hatched: clean wax walls, nothing inside."""
+    COMB = hexc("#e8a42a")
+    COMB_D = hexc("#b5741a")
+    COMB_L = hexc("#f7cb63")
+    FLOOR = hexc("#d99a2e")
+    FLOOR_D = hexc("#bf8222")
+    r = random.Random(4242)
+
+    def hexdist(x, y):
+        ax = abs(x - 7.5)
+        ay = abs(y - 7.5)
+        return max(ax * 0.866 + ay * 0.5, ay)
+
+    t = Tex(16, 16)
+    for y in range(16):
+        for x in range(16):
+            d = hexdist(x, y)
+            if d > 7.0:
+                c = COMB_D
+            elif d > 5.9:
+                c = COMB_L if y < 8 else COMB
+            else:
+                # A shallow empty hollow, shaded darker toward the bottom edge.
+                c = mix(FLOOR, FLOOR_D, max(0.0, min(1.0, (y - 3) / 10.0)))
+            d2 = r.randint(-4, 4)
+            t.set(x, y, tuple(max(0, min(255, v + d2)) for v in c[:3]) + (255,))
+    t.save(os.path.join(ASSETS, "block", "brood_cell_top_empty.png"))
+
+
+def honey_fluid():
+    """Animated liquid honey: slow amber swirls for the still surface, drifting streaks for the flow."""
+    import math
+    DEEP = (196, 112, 18)
+    MID = (232, 152, 32)
+    LIGHT = (252, 205, 92)
+    SHINE = (255, 236, 170)
+
+    def shade(v):
+        # v in roughly [-1, 1] -> a honey color.
+        if v < -0.35:
+            return DEEP
+        if v < 0.25:
+            return MID
+        if v < 0.75:
+            return LIGHT
+        return SHINE
+
+    frames = 32
+    still = Image.new("RGBA", (16, 16 * frames))
+    for f in range(frames):
+        ph = f / frames * 2 * math.pi
+        for y in range(16):
+            for x in range(16):
+                a = x / 16 * 2 * math.pi
+                b = y / 16 * 2 * math.pi
+                # Sums of whole-period waves keep each frame tiling seamlessly.
+                v = (math.sin(a + math.sin(b + ph) * 0.9) * 0.55
+                     + math.sin(b * 2 - a + ph) * 0.3
+                     + math.cos(a * 2 + b + ph * 2) * 0.2)
+                c = shade(v)
+                still.putpixel((x, f * 16 + y), c + (215,))
+    still.save(os.path.join(ASSETS, "block", "honey_still.png"))
+    with open(os.path.join(ASSETS, "block", "honey_still.png.mcmeta"), "w") as fh:
+        fh.write('{\n  "animation": {\n    "frametime": 4\n  }\n}\n')
+
+    flow = Image.new("RGBA", (32, 32 * frames))
+    for f in range(frames):
+        shift = f / frames * 2 * math.pi
+        for y in range(32):
+            for x in range(32):
+                a = x / 32 * 2 * math.pi
+                b = y / 32 * 2 * math.pi
+                # Streaks running down the texture that slide along as the frames go by.
+                v = (math.sin(a * 3 + math.sin(b - shift) * 0.6) * 0.5
+                     + math.sin(b * 2 - shift * 2 + a) * 0.35
+                     + math.cos(a * 5 - b) * 0.15)
+                c = shade(v)
+                flow.putpixel((x, f * 32 + y), c + (215,))
+    flow.save(os.path.join(ASSETS, "block", "honey_flow.png"))
+    with open(os.path.join(ASSETS, "block", "honey_flow.png.mcmeta"), "w") as fh:
+        fh.write('{\n  "animation": {\n    "frametime": 3\n  }\n}\n')
+
+
+def honey_bucket():
+    O = hexc("#2b2b33")
+    METAL = hexc("#9ea2ad")
+    METAL_D = hexc("#6d717c")
+    METAL_L = hexc("#d3d6de")
+    H = hexc("#e8961e")
+    H_L = hexc("#ffd36b")
+    H_D = hexc("#b8680f")
+    t = Tex(16, 16)
+    # Handle.
+    for x, y in ((4, 2), (5, 1), (6, 1), (7, 1), (8, 1), (9, 1), (10, 1), (11, 2), (3, 3), (12, 3)):
+        t.set(x, y, O)
+    for x, y in ((5, 2), (10, 2), (4, 3), (11, 3)):
+        t.set(x, y, METAL_D)
+    # Rim, with honey filling the mouth.
+    for x in range(2, 14):
+        t.set(x, 4, O)
+        t.set(x, 6, O if x in (2, 13) else METAL_L)
+    t.set(2, 5, O)
+    t.set(13, 5, O)
+    for x in range(3, 13):
+        t.set(x, 5, H_L if x in (5, 6, 9) else H)
+    # Body, tapering toward the bottom.
+    for y in range(7, 15):
+        inset = (y - 7) // 3
+        left = 2 + inset
+        right = 13 - inset
+        for x in range(left, right + 1):
+            if x == left or x == right or y == 14:
+                c = O
+            elif x == left + 1:
+                c = METAL_L
+            elif x >= right - 2:
+                c = METAL_D
+            else:
+                c = METAL
+            t.set(x, y, c)
+    # A drip of honey running down the side.
+    for x, y in ((4, 6), (4, 7), (4, 8), (4, 9)):
+        t.set(x, y, H if y < 9 else H_D)
+    t.set(5, 7, H_D)
+    t.save(os.path.join(ASSETS, "item", "honey_bucket.png"))
+
+
 if __name__ == "__main__":
     queen()
     guard_gear()
@@ -882,4 +1010,7 @@ if __name__ == "__main__":
     bee_multitool()
     bee_armor_layers()
     brood_cells()
+    empty_brood_cell()
+    honey_fluid()
+    honey_bucket()
     print("textures written")

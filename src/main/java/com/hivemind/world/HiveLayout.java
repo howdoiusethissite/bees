@@ -1,9 +1,12 @@
 package com.hivemind.world;
 
 import com.hivemind.Hivemind;
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -61,6 +64,33 @@ public final class HiveLayout {
 
 	public static BlockPos throne(final int index) {
 		return center(index).offset(0, -FLOOR_DEPTH + 3, 0);
+	}
+
+	/** The middle of the honey pool, set into the floor behind the throne (north of it). */
+	public static BlockPos honeySpring(final int index) {
+		return center(index).offset(0, -FLOOR_DEPTH, -11);
+	}
+
+	/** Angles (degrees) of the four nursery patches. They fall in the gaps between the comb pillars. */
+	private static final int[] NURSERY_ANGLES = {30, 150, 210, 330};
+	private static final double NURSERY_RADIUS = 10.5;
+
+	/** The middle cell of each nursery patch, at floor level. */
+	public static List<BlockPos> nurseryCenters(final int index) {
+		BlockPos c = center(index);
+		List<BlockPos> centers = new ArrayList<>();
+		for (int degrees : NURSERY_ANGLES) {
+			double angle = Math.toRadians(degrees);
+			int x = c.getX() + Mth.floor(Math.cos(angle) * NURSERY_RADIUS + 0.5);
+			int z = c.getZ() + Mth.floor(Math.sin(angle) * NURSERY_RADIUS + 0.5);
+			centers.add(new BlockPos(x, floorY(), z));
+		}
+		return centers;
+	}
+
+	/** Whether a patch offset is one of its cells. Two opposite corners are trimmed so the patch reads as a little hexagon. */
+	public static boolean isNurseryCell(final int dx, final int dz) {
+		return Math.abs(dx) <= 1 && Math.abs(dz) <= 1 && !(dx == dz && dx != 0);
 	}
 
 	public static AABB bounds(final int index) {
