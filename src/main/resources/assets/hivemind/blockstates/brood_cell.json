@@ -1,0 +1,40 @@
+{
+  "variants": {
+    "need=none,stage=0": {
+      "model": "hivemind:block/brood_cell_0_none"
+    },
+    "need=hungry,stage=0": {
+      "model": "hivemind:block/brood_cell_0_hungry"
+    },
+    "need=lonely,stage=0": {
+      "model": "hivemind:block/brood_cell_0_lonely"
+    },
+    "need=none,stage=1": {
+      "model": "hivemind:block/brood_cell_1_none"
+    },
+    "need=hungry,stage=1": {
+      "model": "hivemind:block/brood_cell_1_hungry"
+    },
+    "need=lonely,stage=1": {
+      "model": "hivemind:block/brood_cell_1_lonely"
+    },
+    "need=none,stage=2": {
+      "model": "hivemind:block/brood_cell_2_none"
+    },
+    "need=hungry,stage=2": {
+      "model": "hivemind:block/brood_cell_2_hungry"
+    },
+    "need=lonely,stage=2": {
+      "model": "hivemind:block/brood_cell_2_lonely"
+    },
+    "need=none,stage=3": {
+      "model": "hivemind:block/brood_cell_3_none"
+    },
+    "need=hungry,stage=3": {
+      "model": "hivemind:block/brood_cell_3_hungry"
+    },
+    "need=lonely,stage=3": {
+      "model": "hivemind:block/brood_cell_3_lonely"
+    }
+  }
+}

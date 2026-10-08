@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "H": "minecraft:honeycomb",
+    "J": "hivemind:royal_jelly"
+  },
+  "pattern": [
+    "H H",
+    "HJH"
+  ],
+  "result": {
+    "id": "hivemind:bee_boots"
+  }
+}

@@ -174,6 +174,7 @@ public final class HiveRaids {
 			player.sendSystemMessage(Component.translatable("message.hivemind.raid_start").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
 		}
 		level.playSound(null, queen.getX(), queen.getY(), queen.getZ(), SoundEvents.BEE_LOOP_AGGRESSIVE, SoundSource.HOSTILE, 2.0F, 0.8F);
+		queen.say(null, "raid_start");
 	}
 
 	private static void tickRaid(final ServerLevel level, final int index, final ActiveRaid raid, final List<ServerPlayer> players) {
@@ -193,6 +194,9 @@ public final class HiveRaids {
 					queen.rewardDefender(player);
 				}
 			}
+			if (queen != null) {
+				queen.say(null, "raid_won");
+			}
 			return;
 		}
 
@@ -204,6 +208,9 @@ public final class HiveRaids {
 			endRaid(level, index, raid);
 			for (ServerPlayer player : players) {
 				player.sendSystemMessage(Component.translatable("message.hivemind.raid_lost").withStyle(ChatFormatting.RED));
+			}
+			if (queen != null) {
+				queen.say(null, "raid_lost");
 			}
 			return;
 		}

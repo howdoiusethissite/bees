@@ -364,6 +364,506 @@ def shrunk_icon():
     t.save(os.path.join(ASSETS, "mob_effect", "shrunk.png"))
 
 
+# ---------------------------------------------------------------------------------------------
+# Gameplay items. Drawn as 16x16 character sprites; each letter is a palette entry, '.' is clear.
+# ---------------------------------------------------------------------------------------------
+SPRITE_PALETTE = {
+    "K": hexc("#3a2410"),  # outline
+    "Y": hexc("#f2b01e"),  # honey
+    "y": hexc("#c98512"),  # honey shade
+    "L": hexc("#ffe07a"),  # honey highlight
+    "B": hexc("#2a2018"),  # bee stripe black
+    "b": hexc("#4a3a2c"),  # stripe highlight
+    "W": hexc("#f6f1e2"),  # white
+    "w": hexc("#d9cfb4"),  # cream shade
+    "G": hexc("#c8e4f0", 150),  # glass
+    "g": hexc("#e9f6fb", 220),  # glass edge
+    "R": hexc("#c8302a"),
+    "r": hexc("#8e1f1c"),
+    "T": hexc("#e0a65c"),  # toast
+    "t": hexc("#9a5a26"),  # crust
+    "P": hexc("#e08a7a"),  # ham
+    "p": hexc("#b05a4c"),
+    "H": hexc("#efe6d0"),  # bone
+    "S": hexc("#7a5631"),  # wood
+    "s": hexc("#553a1f"),
+    "A": hexc("#f5b52e"),  # amber tool head
+    "a": hexc("#b9781a"),
+    "E": hexc("#fff0b8"),  # edge glint
+    "V": hexc("#4f8f2e"),  # leaf
+    "v": hexc("#356b1c"),
+    "C": hexc("#8fd3ff", 200),  # wing
+    "O": hexc("#e88a1a"),  # orange
+}
+
+
+def sprite(name, rows, folder="item", noise=4):
+    assert len(rows) == 16 and all(len(r) == 16 for r in rows), name
+    t = Tex(16, 16)
+    for y, row in enumerate(rows):
+        for x, ch in enumerate(row):
+            if ch != ".":
+                c = SPRITE_PALETTE[ch]
+                t.set(x, y, jitter(c, noise) if ch not in "KBGgCE" else c)
+    t.save(os.path.join(ASSETS, folder, name + ".png"))
+
+
+def beenade():
+    sprite("beenade", [
+        "................",
+        "......KKKK......",
+        ".....KssssK.....",
+        "......KSSK..CC..",
+        ".....KKKKKKCCCC.",
+        "....KLYYYYYKCC..",
+        "...KLYYYYYYyK...",
+        "...KBBBBBBBBK...",
+        "..KYLYYYYYYYyK..",
+        "..KYYYYYYYYYyK..",
+        "..KBBBBBBBBBBK..",
+        "..KYYYYYYYYyyK..",
+        "...KYYYYYYyyK...",
+        "...KBBBBBBBBK...",
+        "....KKyyyyKK....",
+        "......KKKK......",
+    ])
+
+
+def royal_jelly():
+    sprite("royal_jelly", [
+        "................",
+        "................",
+        "......KKKK......",
+        ".....KYYYYK.....",
+        ".....KyyyyK.....",
+        "....KgGGGGgK....",
+        "...KgWWWWWWgK...",
+        "...KgWLWWWWgK...",
+        "...KgWWWWWwgK...",
+        "...KgWWWWwwgK...",
+        "...KgwWWWwwgK...",
+        "...KgwwwwwwgK...",
+        "...KggggggggK...",
+        "....KKKKKKKK....",
+        "................",
+        "................",
+    ])
+
+
+def honey_toast():
+    sprite("honey_toast", [
+        "................",
+        "....KKKK.KKKK...",
+        "...KttttKttttK..",
+        "..KtTTTTTTTTTtK.",
+        "..KtTLYYYYYTTtK.",
+        "..KtTYYYYYYYTtK.",
+        "...KtTYYYYYYTtK.",
+        "...KtTTYYYYTTtK.",
+        "...KtTTYyYTTTtK.",
+        "...KtTTTYTTTTtK.",
+        "...KtTTTyTTTTtK.",
+        "...KtTTTTTTTTtK.",
+        "...KttttttttttK.",
+        "....KKKKKKKKKK..",
+        "................",
+        "................",
+    ])
+
+
+def honeyed_apple():
+    sprite("honeyed_apple", [
+        "................",
+        ".......K.VV.....",
+        ".......KVvV.....",
+        "....KKKsKKKK....",
+        "...KYLYYKYYYK...",
+        "..KLYYYYYYYYyK..",
+        "..KYYRRYYYRRyK..",
+        "..KYRRRRYRRRrK..",
+        "..KRRRRRRRRRrK..",
+        "..KRWRRRRRRRrK..",
+        "..KRRRRRRRRRrK..",
+        "...KRRRRRRRrK...",
+        "...KrRRRRRrrK...",
+        "....KKrKKrKK....",
+        ".....KK..KK.....",
+        "................",
+    ])
+
+
+def honeycomb_candy():
+    sprite("honeycomb_candy", [
+        "................",
+        "................",
+        ".....KKKKKK.....",
+        "....KLLYYYYK....",
+        "...KLYyYYyYYK...",
+        "..KLYYyYYyYYyK..",
+        "..KYyYYyYYyYyK..",
+        "..KYYyYYyYYyyK..",
+        "..KYyYYyYYyYyK..",
+        "..KYYyYYyYYyyK..",
+        "...KYYyYYyYyK...",
+        "....KyyyyyyK....",
+        ".....KKKKKK.....",
+        "................",
+        "................",
+        "................",
+    ])
+
+
+def honey_glazed_ham():
+    sprite("honey_glazed_ham", [
+        "................",
+        "................",
+        ".....KKKKK......",
+        "...KKYLYYYKK....",
+        "..KYLYYYYYYYK...",
+        "..KYYPPPYYYYyK..",
+        ".KYPPPPPPPYYyK..",
+        ".KYPPWPPPPPyyK..",
+        ".KYPPPPPPPPpyK..",
+        ".KyPPPPPPPpppKKK",
+        "..KyPPPPpppKKHHK",
+        "...KKppppKK.KHHK",
+        ".....KKKK....KK.",
+        "................",
+        "................",
+        "................",
+    ])
+
+
+def bee_armor_icons():
+    sprite("bee_headgear", [
+        "................",
+        "....K.....K.....",
+        ".....K...K......",
+        "....KKKKKKKK....",
+        "...KYLYYYYYYK...",
+        "..KYBBBBBBBByK..",
+        "..KYYYYYYYYYyK..",
+        "..KBBKKKKKKBBK..",
+        "..KYKBK..KBKyK..",
+        "..KYKKK..KKKyK..",
+        "..KKK......KKK..",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+    ])
+    sprite("bee_breastplate", [
+        "................",
+        "..KKKK....KKKK..",
+        ".KYLYYKKKKYYYyK.",
+        ".KYYYYYYYYYYYyK.",
+        ".KBBKYYYYYYKBBK.",
+        ".KKKKBBBBBBKKKK.",
+        "....KYYYYYyK....",
+        "....KYYYYYyK....",
+        "....KBBBBBBK....",
+        "....KYYYYYyK....",
+        "....KYYYYyyK....",
+        "....KBBBBBBK....",
+        "....KYYYYyyK....",
+        "....KKKKKKKK....",
+        "................",
+        "................",
+    ])
+    sprite("bee_greaves", [
+        "................",
+        "...KKKKKKKKKK...",
+        "...KYLYYYYYYK...",
+        "...KBBBBBBBBK...",
+        "...KYYYKKYYyK...",
+        "...KYYyKKYYyK...",
+        "...KBBBKKBBBK...",
+        "...KYYyKKYYyK...",
+        "...KYYyKKYYyK...",
+        "...KBBBKKBBBK...",
+        "...KYYyKKYYyK...",
+        "...KYyyKKYyyK...",
+        "...KKKKKKKKKK...",
+        "................",
+        "................",
+        "................",
+    ])
+    sprite("bee_boots", [
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "...KKKK..KKKK...",
+        "...KYLK..KYYK...",
+        "...KBBK..KBBK...",
+        "...KYyK..KYyK...",
+        "...KYyK..KYyK...",
+        "..KKBBK..KBBKK..",
+        ".KYYYyK..KYYYyK.",
+        ".KBBBBK..KBBBBK.",
+        ".KKKKKK..KKKKKK.",
+        "................",
+        "................",
+    ])
+
+
+def bee_multitool():
+    handle = [
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "......KK........",
+        ".....KSK........",
+        "....KBBK........",
+        "...KSSK.........",
+        "..KYYK..........",
+        ".KSsK...........",
+        ".KKK............",
+        "................",
+    ]
+
+    def overlay(head):
+        rows = []
+        for h_row, b_row in zip(head, handle):
+            rows.append("".join(h if h != "." else b for h, b in zip(h_row, b_row)))
+        return rows
+
+    sprite("bee_multitool_sword", overlay([
+        "............KKK.",
+        "...........KEAK.",
+        "..........KEAaK.",
+        ".........KEAaK..",
+        "........KEAaK...",
+        ".......KEAaK....",
+        "..KK..KEAaK.....",
+        "..KYKKEAaK......",
+        "...KYYAaK.......",
+        "....KYYK........",
+        "...KBKKYK.......",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+    ]))
+    sprite("bee_multitool_axe", overlay([
+        "................",
+        "......KKKK......",
+        ".....KEAAAK.....",
+        "....KEAAAAaK....",
+        "....KAAAAKaaK...",
+        "....KAAaKSKaK...",
+        ".....KaKSK.KK...",
+        "......KSK.......",
+        ".....KSK........",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+    ]))
+    sprite("bee_multitool_shovel", overlay([
+        "................",
+        "..........KKK...",
+        ".........KEAAK..",
+        "........KEAAAaK.",
+        "........KAAAAaK.",
+        "........KAAAaK..",
+        ".......KSKaaK...",
+        "......KSK.KK....",
+        ".....KSK........",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+    ]))
+    sprite("bee_multitool_hoe", overlay([
+        "................",
+        "......KKKKK.....",
+        ".....KEAAAAK....",
+        "....KAaKKSSK....",
+        "....KaK.KSK.....",
+        ".....K.KSK......",
+        ".......KSK......",
+        "......KSK.......",
+        ".....KSK........",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+    ]))
+
+
+def bee_armor_layers():
+    """Worn armor, in the standard 64x32 humanoid armor layout."""
+    YEL = hexc("#f2b01e")
+    YEL_D = hexc("#c98512")
+    YEL_L = hexc("#ffe07a")
+    BLK = hexc("#2a2018")
+    FUZZ = hexc("#e6c45a")
+    EYE_D = hexc("#1d1424")
+    EYE_S = hexc("#6c5a8c")
+    WING = hexc("#cfe8ff", 170)
+    WING_E = hexc("#9cc4e8", 220)
+
+    def stripes(period=4, offset=0):
+        return lambda i, j, w, h: jitter(BLK if (j + offset) % period >= period // 2 else (YEL_L if j == 0 else YEL), 6)
+
+    # Helmet, chestplate and boots share one texture.
+    t = Tex(64, 32)
+    head = Box(t, 0, 0, 8, 8, 8)
+    head.all(stripes(4))
+    head.top(lambda i, j, w, h: jitter(YEL if (i + j) % 5 else FUZZ, 8))
+
+    def visor(i, j, w, h):
+        # Two big compound eyes, like a bee's.
+        if 2 <= j <= 5 and (i in (0, 1, 2) or i in (5, 6, 7)):
+            return EYE_S if (i, j) in ((1, 2), (6, 2)) else EYE_D
+        return jitter(YEL_L if j <= 1 else YEL, 6)
+
+    head.front(visor)
+    # The hat layer becomes a fuzzy collar along the bottom edge; the rest is left clear.
+    hat = Box(t, 32, 0, 8, 8, 8)
+    hat.right(lambda i, j, w, h: jitter(FUZZ, 12) if j >= 7 else (0, 0, 0, 0))
+    hat.left(lambda i, j, w, h: jitter(FUZZ, 12) if j >= 7 else (0, 0, 0, 0))
+    hat.back(lambda i, j, w, h: jitter(FUZZ, 12) if j >= 7 else (0, 0, 0, 0))
+
+    body = Box(t, 16, 16, 8, 12, 4)
+    body.all(stripes(4, 2))
+    body.top(solid(FUZZ, 10))
+
+    def wings(i, j, w, h):
+        # Little folded wings painted on the back.
+        for cx in (2, 5):
+            dx = (i - cx - 0.5) / 2.0
+            dy = (j - 3.5) / 3.5
+            r = dx * dx + dy * dy
+            if r <= 1.0:
+                return WING_E if r > 0.6 else WING
+        return stripes(4, 2)(i, j, w, h)
+
+    body.back(wings)
+    arm = Box(t, 40, 16, 4, 12, 4)
+    arm.all(lambda i, j, w, h: jitter(BLK if j >= 9 else (FUZZ if j <= 1 else YEL), 7))
+    leg = Box(t, 0, 16, 4, 12, 4)
+    # Boots only cover the bottom of the leg.
+    leg.all(lambda i, j, w, h: jitter(BLK if j >= 10 else YEL_D, 6) if j >= 6 else (0, 0, 0, 0))
+    leg.bottom(solid(BLK, 4))
+    t.save(os.path.join(ASSETS, "entity", "equipment", "humanoid", "bee.png"))
+
+    # Leggings.
+    t = Tex(64, 32)
+    body = Box(t, 16, 16, 8, 12, 4)
+    body.all(lambda i, j, w, h: jitter(BLK if j >= 8 and j % 4 < 2 else YEL, 6) if j >= 7 else (0, 0, 0, 0))
+    leg = Box(t, 0, 16, 4, 12, 4)
+    leg.all(stripes(4, 1))
+    t.save(os.path.join(ASSETS, "entity", "equipment", "humanoid_leggings", "bee.png"))
+
+
+def brood_cells():
+    COMB = hexc("#e8a42a")
+    COMB_D = hexc("#b5741a")
+    COMB_L = hexc("#f7cb63")
+    WAX = hexc("#f3dc9a")
+    WAX_D = hexc("#d9bc72")
+    JELLY = hexc("#f4d27a")
+    GRUB = hexc("#fbf8ef")
+    GRUB_D = hexc("#c9bb98")
+    SEG = hexc("#b8a77f")
+    DROP = hexc("#ff9f1a")
+    DROP_L = hexc("#ffd77a")
+    BLUE = hexc("#7fb6ff")
+    BLUE_L = hexc("#d3e6ff")
+    OUT = hexc("#3a2410")
+
+    def hexdist(x, y):
+        ax = abs(x - 7.5)
+        ay = abs(y - 7.5)
+        return max(ax * 0.866 + ay * 0.5, ay)
+
+    def side():
+        t = Tex(16, 16)
+        for y in range(16):
+            for x in range(16):
+                cx = (x + (4 if (y // 4) % 2 else 0)) % 8 - 3.5
+                cy = y % 4 - 1.5
+                d = abs(cx) * 0.5 + abs(cy)
+                t.set(x, y, jitter(COMB_L if d < 1.0 else COMB if d < 2.1 else COMB_D, 6))
+        t.save(os.path.join(ASSETS, "block", "brood_cell_side.png"))
+
+    def grub(t, size):
+        # A curled C-shaped larva lying in its jelly.
+        r_out = 2.6 + size * 1.5
+        r_in = r_out - 2.4 - size * 0.8
+        for y in range(16):
+            for x in range(16):
+                dx = x - 7.5
+                dy = y - 7.8
+                d = (dx * dx + dy * dy) ** 0.5
+                if r_in <= d <= r_out and not (dx > 0.5 and abs(dy) < 1.3 + size * 0.4):
+                    seg = (int(((dx * 2.3 - dy * 1.7) + 20)) % 3) == 0
+                    edge = d > r_out - 0.7
+                    t.set(x, y, SEG if seg else (GRUB_D if edge else GRUB))
+
+    for stage in range(4):
+        for need in ("none", "hungry", "lonely"):
+            t = Tex(16, 16)
+            for y in range(16):
+                for x in range(16):
+                    d = hexdist(x, y)
+                    if d > 7.0:
+                        c = COMB_D
+                    elif d > 5.9:
+                        c = COMB_L if y < 8 else COMB
+                    elif stage == 3:
+                        # Wax cap, slightly domed.
+                        c = WAX if (x + y) % 4 else WAX_D
+                        if d < 2.0:
+                            c = hexc("#fbeab5")
+                    else:
+                        c = JELLY if stage > 0 and d < 4.2 else hexc("#f0c25a")
+                    t.set(x, y, jitter(c, 5))
+            if stage == 0:
+                # A single egg standing in the bottom of the cell.
+                for y in range(5, 11):
+                    for x in range(7, 9 + (1 if 6 <= y <= 9 else 0)):
+                        t.set(x, y, GRUB if x < 9 else GRUB_D)
+            elif stage < 3:
+                grub(t, stage - 1)
+            if need == "hungry":
+                # A little honey drop in the corner: feed me.
+                for x, y in ((12, 1), (12, 2), (11, 3), (12, 3), (13, 3), (11, 4), (12, 4), (13, 4), (12, 5)):
+                    t.set(x, y, DROP)
+                t.set(11, 3, DROP_L)
+                for x, y in ((12, 0), (11, 1), (13, 1), (10, 3), (14, 3), (10, 4), (14, 4), (11, 5), (13, 5), (12, 6)):
+                    t.set(x, y, OUT)
+            elif need == "lonely":
+                # A small blue heart: give it a pat.
+                for x, y in ((10, 2), (11, 2), (13, 2), (14, 2), (10, 3), (11, 3), (12, 3), (13, 3), (14, 3), (11, 4), (12, 4), (13, 4), (12, 5)):
+                    t.set(x, y, BLUE)
+                t.set(10, 2, BLUE_L)
+                for x, y in ((10, 1), (11, 1), (13, 1), (14, 1), (9, 2), (12, 2), (15, 2), (9, 3), (15, 3), (10, 4), (14, 4), (11, 5), (13, 5), (12, 6)):
+                    t.set(x, y, OUT)
+            t.save(os.path.join(ASSETS, "block", "brood_cell_top_%d_%s.png" % (stage, need)))
+
+    side()
+
+
 if __name__ == "__main__":
     queen()
     guard_gear()
@@ -372,4 +872,14 @@ if __name__ == "__main__":
     spawn_egg("queen_bee_spawn_egg", hexc("#3b2752"), hexc("#e0c160"))
     hive_exit()
     shrunk_icon()
+    beenade()
+    royal_jelly()
+    honey_toast()
+    honeyed_apple()
+    honeycomb_candy()
+    honey_glazed_ham()
+    bee_armor_icons()
+    bee_multitool()
+    bee_armor_layers()
+    brood_cells()
     print("textures written")

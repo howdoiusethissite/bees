@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "equipment",
+  "ingredients": [
+    "minecraft:diamond_sword",
+    "minecraft:diamond_pickaxe",
+    "minecraft:diamond_axe",
+    "minecraft:diamond_shovel",
+    "minecraft:diamond_hoe",
+    "hivemind:royal_jelly",
+    "hivemind:royal_jelly",
+    "hivemind:royal_jelly",
+    "minecraft:honey_block"
+  ],
+  "result": {
+    "id": "hivemind:bee_multitool"
+  }
+}

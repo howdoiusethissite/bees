@@ -1,13 +1,20 @@
 package com.hivemind;
 
+import com.hivemind.network.QueenSpeechPayload;
 import com.hivemind.registry.ModBlocks;
+import com.hivemind.registry.ModComponents;
 import com.hivemind.registry.ModEffects;
 import com.hivemind.registry.ModEntities;
 import com.hivemind.registry.ModItems;
+import com.hivemind.registry.ModSounds;
+import com.hivemind.world.BeeArmor;
+import com.hivemind.world.BeeSwarms;
 import com.hivemind.world.HiveCommands;
 import com.hivemind.world.HiveEvents;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.level.block.DispenserBlock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,10 +29,16 @@ public class Hivemind implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		ModEffects.init();
+		ModSounds.init();
+		ModComponents.init();
 		ModBlocks.init();
 		ModEntities.init();
 		ModItems.init();
+		PayloadTypeRegistry.clientboundPlay().register(QueenSpeechPayload.TYPE, QueenSpeechPayload.CODEC);
+		DispenserBlock.registerProjectileBehavior(ModItems.BEENADE);
 		HiveEvents.init();
 		HiveCommands.init();
+		BeeSwarms.init();
+		BeeArmor.init();
 	}
 }

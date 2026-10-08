@@ -7,6 +7,9 @@
 	"authors": ["howdoiusethissite"],
 	"license": "MIT",
 	"environment": "*",
+	"mixins": [
+		"hivemind.mixins.json"
+	],
 	"entrypoints": {
 		"main": ["com.hivemind.Hivemind"],
 		"client": ["com.hivemind.client.HivemindClient"]

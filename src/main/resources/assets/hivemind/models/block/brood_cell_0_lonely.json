@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "hivemind:block/brood_cell_top_0_lonely",
+    "side": "hivemind:block/brood_cell_side",
+    "bottom": "hivemind:block/brood_cell_side"
+  }
+}

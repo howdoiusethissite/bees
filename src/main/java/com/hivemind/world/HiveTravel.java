@@ -30,6 +30,9 @@ public final class HiveTravel {
 		HiveData.Hive hive = data.getOrCreate(fromLevel.dimension(), hivePos, created);
 		if (created[0]) {
 			HiveInteriorBuilder.build(hiveLevel, hive.index());
+		} else if (hive.version() < HiveInteriorBuilder.LAYOUT_VERSION) {
+			HiveInteriorBuilder.upgrade(hiveLevel, hive.index(), hive.version());
+			data.markUpgraded(hive);
 		}
 
 		// Remember where to put the player back. Step them out in front of the hive rather than inside the block.
