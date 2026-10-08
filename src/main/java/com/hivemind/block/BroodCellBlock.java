@@ -1,6 +1,7 @@
 package com.hivemind.block;
 
 import com.hivemind.entity.QueenBee;
+import com.hivemind.registry.ModBlocks;
 import com.hivemind.registry.ModItems;
 import com.hivemind.world.HiveInteriorBuilder;
 import com.hivemind.world.HiveLayout;
@@ -188,7 +189,8 @@ public class BroodCellBlock extends Block {
 	}
 
 	private void hatch(final BlockState state, final ServerLevel level, final BlockPos pos) {
-		level.setBlock(pos, state.setValue(STAGE, EGG).setValue(NEED, Need.NONE), Block.UPDATE_CLIENTS);
+		// The cell stays empty until the queen comes round to lay in it again.
+		level.setBlock(pos, ModBlocks.EMPTY_BROOD_CELL.defaultBlockState(), Block.UPDATE_CLIENTS);
 		level.playSound(null, pos, SoundEvents.BEEHIVE_EXIT, SoundSource.BLOCKS, 1.0F, 1.5F);
 		level.sendParticles(ParticleTypes.WAX_OFF, pos.getX() + 0.5, pos.getY() + 1.1, pos.getZ() + 0.5, 10, 0.3, 0.1, 0.3, 0.05);
 

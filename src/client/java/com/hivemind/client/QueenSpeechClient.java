@@ -29,15 +29,17 @@ public final class QueenSpeechClient {
 		final String text;
 		final boolean addressed;
 		final int favor;
+		final boolean log;
 		int shown;
 		int wait;
 		int lettersSinceSound;
 
-		Speech(final int queenId, final String text, final boolean addressed, final int favor) {
+		Speech(final int queenId, final String text, final boolean addressed, final int favor, final boolean log) {
 			this.queenId = queenId;
 			this.text = text;
 			this.addressed = addressed;
 			this.favor = favor;
+			this.log = log;
 		}
 	}
 
@@ -49,7 +51,7 @@ public final class QueenSpeechClient {
 
 	public static void init() {
 		ClientPlayNetworking.registerGlobalReceiver(QueenSpeechPayload.TYPE, (payload, context) -> {
-			Speech speech = new Speech(payload.queenId(), I18n.get(payload.key()), payload.addressed(), payload.favor());
+			Speech speech = new Speech(payload.queenId(), I18n.get(payload.key()), payload.addressed(), payload.favor(), payload.log());
 			ACTIVE.put(payload.queenId(), speech);
 		});
 		ClientTickEvents.END_CLIENT_TICK.register(QueenSpeechClient::tick);
@@ -92,7 +94,8 @@ public final class QueenSpeechClient {
 				minecraft.gui.hud.setOverlayMessage(line(speech, finished ? speech.text : speech.text.substring(0, speech.shown), finished), false);
 			}
 			if (finished) {
-				if (speech.addressed) {
+				// Small talk only shows above the hotbar; gifts and raids also go in the chat log.
+				if (speech.addressed && speech.log) {
 					minecraft.gui.hud.getChat().addClientSystemMessage(line(speech, speech.text, true));
 				}
 				done.add(speech.queenId);
