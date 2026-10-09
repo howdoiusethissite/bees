@@ -1,5 +1,6 @@
 package com.hivemind.world;
 
+import com.hivemind.mixin.BeeAccessor;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -16,6 +17,8 @@ import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.animal.bee.Bee;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.phys.Vec3;
@@ -24,14 +27,22 @@ import org.jspecify.annotations.Nullable;
 /**
  * Short-lived swarms of ordinary vanilla bees, let loose by beenades and bee armor. They hunt the
  * nearest monster, sting it (and, being bees, die from it), and fly off after a while if they never do.
+ * The more influence the player who let them loose has with the bees (see {@link HiveInfluence}), the
+ * tougher the swarm: more bees, harder stings, and at Honored Keeper they grow their stingers back.
  */
 public final class BeeSwarms {
 	public static final String SWARM_TAG = "hivemind.swarm";
 	private static final int LIFETIME = 20 * 25;
 	private static final double HUNT_RANGE = 16.0;
+	/** Vanilla bees hit for 2. Each influence rank adds this much. */
+	private static final double DAMAGE_PER_RANK = 1.5;
+	/** At this rank the swarm's bees regrow their stingers instead of dying after one sting. */
+	private static final int REGROW_STINGER_RANK = 2;
 
 	/** Swarm bee id -> game time it should leave. Only kept in memory; swarm bees loaded back in after a restart leave right away. */
 	private static final Map<UUID, Long> EXPIRY = new HashMap<>();
+	/** Swarm bees that grow their stingers back. */
+	private static final Map<UUID, Boolean> REGROWS = new HashMap<>();
 
 	private BeeSwarms() {
 	}
@@ -54,10 +65,14 @@ public final class BeeSwarms {
 		return release(level, pos, owner, 3 + level.getRandom().nextInt(3), null);
 	}
 
-	/** Spawns {@code count} bees at {@code pos}. They go for {@code target} if given, otherwise the nearest monster. */
+	/**
+	 * Spawns {@code count} bees at {@code pos}, plus one more per influence rank of the owner. They go for
+	 * {@code target} if given, otherwise the nearest monster.
+	 */
 	public static int release(final ServerLevel level, final Vec3 pos, final @Nullable Entity owner, final int count, final @Nullable LivingEntity target) {
+		int rank = HiveInfluence.rankOf(owner);
 		int spawned = 0;
-		for (int i = 0; i < count; i++) {
+		for (int i = 0; i < count + rank; i++) {
 			Bee bee = EntityTypes.BEE.create(level, EntitySpawnReason.MOB_SUMMONED);
 			if (bee == null) {
 				continue;
@@ -72,8 +87,23 @@ public final class BeeSwarms {
 					scale.setBaseValue(HiveInteriorBuilder.RESIDENT_BEE_SCALE);
 				}
 			}
+			if (rank > 0) {
+				AttributeInstance damage = bee.getAttribute(Attributes.ATTACK_DAMAGE);
+				if (damage != null) {
+					damage.setBaseValue(damage.getBaseValue() + rank * DAMAGE_PER_RANK);
+				}
+			}
+			if (rank >= HiveInfluence.MAX_RANK) {
+				bee.addEffect(new MobEffectInstance(MobEffects.SPEED, LIFETIME * 2, 1));
+				bee.addEffect(new MobEffectInstance(MobEffects.RESISTANCE, LIFETIME * 2, 1));
+			}
+			if (rank >= REGROW_STINGER_RANK) {
+				REGROWS.put(bee.getUUID(), true);
+			}
 			bee.addTag(SWARM_TAG);
-			EXPIRY.put(bee.getUUID(), level.getGameTime() + LIFETIME + level.getRandom().nextInt(40));
+			// Royal swarms stick around twice as long.
+			int lifetime = rank >= HiveInfluence.MAX_RANK ? LIFETIME * 2 : LIFETIME;
+			EXPIRY.put(bee.getUUID(), level.getGameTime() + lifetime + level.getRandom().nextInt(40));
 			level.addFreshEntity(bee);
 			LivingEntity prey = target != null && target.isAlive() ? target : findPrey(level, bee, owner);
 			if (prey != null) {
@@ -96,6 +126,11 @@ public final class BeeSwarms {
 				}
 				continue;
 			}
+			if (bee.hasStung() && bee.isAlive() && REGROWS.containsKey(bee.getUUID())) {
+				// A royal swarm bee: the stinger grows back and it's straight back into the fight.
+				((BeeAccessor)bee).hivemind$setHasStung(false);
+				level.sendParticles(ParticleTypes.WAX_ON, bee.getX(), bee.getY() + 0.2, bee.getZ(), 2, 0.1, 0.1, 0.1, 0.01);
+			}
 			if (!bee.isAlive() || now >= entry.getValue()) {
 				if (bee.isAlive()) {
 					level.sendParticles(ParticleTypes.POOF, bee.getX(), bee.getY() + 0.2, bee.getZ(), 4, 0.1, 0.1, 0.1, 0.01);
@@ -112,6 +147,7 @@ public final class BeeSwarms {
 			}
 		}
 		done.forEach(EXPIRY::remove);
+		done.forEach(REGROWS::remove);
 	}
 
 	private static @Nullable LivingEntity findPrey(final ServerLevel level, final Bee bee, final @Nullable Entity owner) {

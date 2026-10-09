@@ -19,6 +19,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityReference;
 import net.minecraft.world.entity.LivingEntity;
@@ -28,6 +29,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.BeehiveBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jspecify.annotations.Nullable;
 
@@ -70,6 +72,11 @@ public final class HiveEvents {
 					HiveTravel.enterHive(serverPlayer, serverLevel, pos.immutable());
 				}
 				return InteractionResult.SUCCESS;
+			}
+			if (state.is(BlockTags.BEEHIVES) && state.hasProperty(BeehiveBlock.HONEY_LEVEL) && hand == InteractionHand.MAIN_HAND
+				&& player.getItemInHand(hand).isEmpty() && !level.isClientSide()) {
+				// Hives can hold more than they show, so an empty hand checks how much is in there.
+				HiveHoney.report(player, level, pos, state);
 			}
 			return InteractionResult.PASS;
 		});

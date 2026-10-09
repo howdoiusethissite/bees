@@ -19,6 +19,12 @@ A Fabric mod for Minecraft 26.3 that lets you shrink down and go inside a beehiv
    you, and every third flower she hands you a gift (bone meal, honey, honeycomb, emeralds, beenades,
    royal jelly...). At higher favor her gifts get bigger. She can give a gift at most once every 30 seconds.
    Right-click her with an empty hand to say hi and see your favor.
+   **She's always craving one flower in particular**, and it changes every week (7 in-game days, configurable).
+   She'll tell you which when you say hi, and two of the potted flowers by the entrance always hold it. Bring her
+   that flower and it's worth 3 favor instead of 1, she gives a gift every time (at most once every 10 seconds) with
+   two extra rolls, plus a roll from her special stores (`queen_craving_gift.json`: royal jelly, emeralds, diamonds,
+   and once in a while a Royal Egg).
+   The potted flowers around her dais refill every time someone comes into the hive, so you can always grab one.
    She talks back, Animal Crossing style: her lines type out above your hotbar while she babbles them in
    little buzzy syllables. Small talk only shows above the hotbar (gifts and raid lines also go in chat), she
    won't start a new line within a few seconds of the last one, and she only chats on her own every few minutes.
@@ -37,6 +43,28 @@ A Fabric mod for Minecraft 26.3 that lets you shrink down and go inside a beehiv
    and players near her get a little Regeneration. There's also a pool of liquid honey behind the throne.
 8. **Leave** through the glowing honey door at the south end. You'll be back where you came in, at normal size.
 
+## Influence
+
+Your influence with the bees is the highest favor you've ever reached with any queen. It never goes down, and each
+rank makes every bee you call on (beenades and bee armor) fight harder:
+
+| Rank | Influence | What you get |
+|---|---|---|
+| Hive Friend | 10 | One extra bee per swarm, and each bee stings 1.5 harder |
+| Honored Keeper | 25 | Two extra bees, +3 sting damage, and your bees grow their stingers back instead of dying after one sting |
+| Royal Confidant | 50 | Three extra bees, +4.5 sting damage, Speed II and Resistance II, swarms last twice as long, and the queen hands you a **Royal Egg** (once) |
+
+## Grand hives
+
+Plant a **Royal Egg** on the ground. Bees gather round it and build over the next 10 minutes (configurable), and when
+they're done you have a **grand hive**: a big woven skep with a glowing door at the front, facing where you stood,
+and a few real bee nests set into its sides so the local bees move in. It only fills in air and plants, so it won't
+eat into the ground or your builds.
+
+Right-click the door to walk in. No Shrinking Honey needed. Inside it's a full hive interior with a bigger colony
+(16 workers, 8 guards), and the queen is yours: you start at maximum favor with her, and planting the egg makes you a
+Royal Confidant straight away.
+
 ## Bees that follow you
 
 Sneak and right-click any bee with an empty hand and it follows you around (up to 6 at once). Do it again to send
@@ -47,6 +75,14 @@ That's also how you take bees home from a hive: once the queen likes you (6 favo
 They shrink to normal size outside, and when you send them off they look for a hive of their own.
 
 ## Honey
+
+- **Bigger hives.** A beehive or bee nest can hold up to 20 honey (configurable), not just 5. It still looks full at
+  5, and keeps the rest in reserve. Right-click a hive with an empty hand to see how much is in it.
+- **Bigger harvests.** Shearing a full hive gives 3 extra honeycomb, plus 1 per stored honey past 5. Bottling it gives
+  1 extra honey bottle, plus 1 for every 2 stored past 5 (the extras don't use up glass bottles). A bucket takes the
+  visible honey as a Honey Bucket and gives the reserve as bottles.
+- **Busier bees.** Bees spend a fifth as long inside the hive turning nectar into honey (24 seconds instead of 2
+  minutes) and half as long hovering over each flower, so hives fill a lot faster.
 
 - **Liquid honey.** Wading in it is slow, you sink gently instead of falling (no fall damage), and standing in it
   gives you Regeneration. It creeps a short way like lava and never makes new sources by itself. Touching water
@@ -80,12 +116,28 @@ In vanilla you can already bone meal tall flowers to duplicate them, and bone me
   poison, handy against cave spiders), Honeycomb Candy (honeycomb + sugar + honey makes 4; a quick snack
   with a burst of Speed) and Honey-Glazed Ham (cooked porkchop + honey + sugar).
 
+## Config
+
+`config/hivemind.json` is written the first time the game starts. Each setting has an explanation right above it.
+
+| Setting | Default | |
+|---|---|---|
+| `maxHiveHoney` | 20 | Most honey a hive can hold (vanilla: 5) |
+| `shearsBonusHoneycomb` | 3 | Extra honeycomb from shearing a full hive |
+| `shearsHoneycombPerStoredHoney` | 1.0 | Extra honeycomb per stored honey past 5 |
+| `bottleBonusHoney` | 1 | Extra honey bottles from bottling a full hive |
+| `bottleHoneyPerStoredHoney` | 0.5 | Extra honey bottles per stored honey past 5 |
+| `hiveWorkTimeMultiplier` | 0.2 | Time bees spend inside the hive, vs vanilla |
+| `pollinationTimeMultiplier` | 0.5 | Time bees spend on each flower, vs vanilla |
+| `cravingDays` | 7 | In-game days before the queen craves a new flower |
+| `grandHiveGrowMinutes` | 10 | Minutes a royal egg takes to grow into a grand hive |
+
 ## Commands and data
 
 Ops can use `/hivemind raid` to start a raid in the hive they're in and `/hivemind leave` to exit.
 
 Gift contents live in data-pack loot tables, so they're easy to change:
-`data/hivemind/loot_table/gameplay/queen_gift.json` and `queen_defense_reward.json`.
+`data/hivemind/loot_table/gameplay/queen_gift.json`, `queen_craving_gift.json` and `queen_defense_reward.json`.
 
 ## Building
 

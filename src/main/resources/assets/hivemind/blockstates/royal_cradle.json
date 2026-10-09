@@ -1,0 +1,9 @@
+{
+  "multipart": [
+    {
+      "apply": {
+        "model": "hivemind:block/royal_cradle"
+      }
+    }
+  ]
+}

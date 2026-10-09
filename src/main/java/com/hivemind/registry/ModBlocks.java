@@ -3,6 +3,8 @@ package com.hivemind.registry;
 import com.hivemind.Hivemind;
 import com.hivemind.block.BroodCellBlock;
 import com.hivemind.block.EmptyBroodCellBlock;
+import com.hivemind.block.GrandHiveDoorBlock;
+import com.hivemind.block.RoyalCradleBlock;
 import com.hivemind.fluid.HoneyLiquidBlock;
 import com.hivemind.block.HiveExitBlock;
 import net.minecraft.core.registries.Registries;
@@ -62,6 +64,34 @@ public final class ModBlocks {
 			.noLootTable()
 			.liquid()
 			.sound(SoundType.EMPTY)
+	);
+
+	public static final ResourceKey<Block> ROYAL_CRADLE_KEY = ResourceKey.create(Registries.BLOCK, Hivemind.id("royal_cradle"));
+
+	/** A planted royal egg, slowly growing into a grand hive. */
+	public static final Block ROYAL_CRADLE = Blocks.register(
+		ROYAL_CRADLE_KEY,
+		RoyalCradleBlock::new,
+		BlockBehaviour.Properties.of()
+			.mapColor(MapColor.COLOR_PURPLE)
+			.strength(-1.0F, 3600000.0F)
+			.noLootTable()
+			.lightLevel(state -> 10)
+			.sound(SoundType.HONEY_BLOCK)
+	);
+
+	public static final ResourceKey<Block> GRAND_HIVE_DOOR_KEY = ResourceKey.create(Registries.BLOCK, Hivemind.id("grand_hive_door"));
+
+	/** The front door of a grand hive. Right-click to walk in. */
+	public static final Block GRAND_HIVE_DOOR = Blocks.register(
+		GRAND_HIVE_DOOR_KEY,
+		GrandHiveDoorBlock::new,
+		BlockBehaviour.Properties.of()
+			.mapColor(MapColor.COLOR_ORANGE)
+			.strength(-1.0F, 3600000.0F)
+			.noLootTable()
+			.lightLevel(state -> 12)
+			.sound(SoundType.CORAL_BLOCK)
 	);
 
 	private ModBlocks() {

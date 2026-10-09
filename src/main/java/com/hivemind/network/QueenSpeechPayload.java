@@ -14,8 +14,9 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
  * @param favor the listener's favor to show after the line, or -1 to leave it off
  * @param log whether the line is worth keeping in the chat log once it's been said (gifts, raids),
  *            rather than just showing above the hotbar
+ * @param arg a translation key filled into the line's {@code %s} (the flower she's craving), or empty for none
  */
-public record QueenSpeechPayload(int queenId, String key, boolean addressed, int favor, boolean log) implements CustomPacketPayload {
+public record QueenSpeechPayload(int queenId, String key, boolean addressed, int favor, boolean log, String arg) implements CustomPacketPayload {
 	public static final CustomPacketPayload.Type<QueenSpeechPayload> TYPE = new CustomPacketPayload.Type<>(Hivemind.id("queen_speech"));
 	public static final StreamCodec<RegistryFriendlyByteBuf, QueenSpeechPayload> CODEC = StreamCodec.composite(
 		ByteBufCodecs.VAR_INT,
@@ -28,6 +29,8 @@ public record QueenSpeechPayload(int queenId, String key, boolean addressed, int
 		QueenSpeechPayload::favor,
 		ByteBufCodecs.BOOL,
 		QueenSpeechPayload::log,
+		ByteBufCodecs.STRING_UTF8,
+		QueenSpeechPayload::arg,
 		QueenSpeechPayload::new
 	);
 

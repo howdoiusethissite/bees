@@ -16,7 +16,10 @@ import net.minecraft.world.entity.animal.bee.Bee;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.CandleBlock;
+import net.minecraft.world.level.block.FlowerPotBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Carves out one hive interior: a big honeycomb dome with comb pillars, hanging combs,
@@ -29,6 +32,9 @@ public final class HiveInteriorBuilder {
 	private static final int FLAGS = Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE;
 	private static final int WORKER_BEES = 10;
 	private static final int GUARD_BEES = 6;
+	/** A grand hive grown from a royal egg is a bigger colony. */
+	private static final int GRAND_WORKER_BEES = 16;
+	private static final int GRAND_GUARD_BEES = 8;
 	/** Worker bees inside are scaled up so they look bee-sized next to a shrunken player. */
 	public static final double RESIDENT_BEE_SCALE = 1.8;
 
@@ -50,7 +56,10 @@ public final class HiveInteriorBuilder {
 		}
 	}
 
-	public static void build(final ServerLevel level, final int index) {
+	/**
+	 * @param founder for a grand hive, the player who planted the royal egg. Their queen adores them from the start.
+	 */
+	public static void build(final ServerLevel level, final int index, final @Nullable UUID founder) {
 		BlockPos c = HiveLayout.center(index);
 		buildShellAndFloor(level, c);
 		buildPillars(level, c);
@@ -59,7 +68,7 @@ public final class HiveInteriorBuilder {
 		buildExit(level, index);
 		buildNursery(level, index);
 		buildHoneySpring(level, index);
-		spawnResidents(level, index);
+		spawnResidents(level, index, founder);
 	}
 
 	/**
@@ -293,14 +302,42 @@ public final class HiveInteriorBuilder {
 		}
 
 		// Potted flowers around the base, gifts from past visitors.
-		Block[] pots = {
-			Blocks.POTTED_DANDELION, Blocks.POTTED_POPPY, Blocks.POTTED_CORNFLOWER, Blocks.POTTED_ALLIUM, Blocks.POTTED_OXEYE_DAISY, Blocks.POTTED_BLUE_ORCHID,
-			Blocks.POTTED_AZURE_BLUET, Blocks.POTTED_DANDELION
-		};
-		for (int i = 0; i < pots.length; i++) {
-			double angle = i * Math.PI / 4 + Math.PI / 8;
-			pos.set(c.getX() + Mth.floor(Math.cos(angle) * 9 + 0.5), floorY + 1, c.getZ() + Mth.floor(Math.sin(angle) * 9 + 0.5));
-			level.setBlock(pos, pots[i].defaultBlockState(), FLAGS);
+		for (int i = 0; i < POTS.length; i++) {
+			level.setBlock(potPos(c, i), POTS[i].defaultBlockState(), FLAGS);
+		}
+	}
+
+	private static final Block[] POTS = {
+		Blocks.POTTED_DANDELION, Blocks.POTTED_POPPY, Blocks.POTTED_CORNFLOWER, Blocks.POTTED_ALLIUM, Blocks.POTTED_OXEYE_DAISY, Blocks.POTTED_BLUE_ORCHID,
+		Blocks.POTTED_AZURE_BLUET, Blocks.POTTED_DANDELION
+	};
+	/** Which of the pots hold the flower the queen is craving. They sit either side of the walkway, facing the entrance. */
+	private static final int[] CRAVING_POTS = {1, 2};
+
+	private static BlockPos potPos(final BlockPos c, final int i) {
+		double angle = i * Math.PI / 4 + Math.PI / 8;
+		return new BlockPos(c.getX() + Mth.floor(Math.cos(angle) * 9 + 0.5), HiveLayout.floorY() + 1, c.getZ() + Mth.floor(Math.sin(angle) * 9 + 0.5));
+	}
+
+	/**
+	 * Puts a flower back in every pot around the dais that's been emptied, and makes sure two of them hold
+	 * {@code craving}, the flower the queen wants right now. Called each time someone comes in, so the pots
+	 * never run out. Only pots (empty or full) are touched.
+	 */
+	public static void refillFlowerPots(final ServerLevel level, final int index, final Block craving) {
+		BlockPos c = HiveLayout.center(index);
+		for (int i = 0; i < POTS.length; i++) {
+			BlockPos pos = potPos(c, i);
+			BlockState current = level.getBlockState(pos);
+			// Only pots. A nursery patch may have taken a pot's spot, and that stays a nursery.
+			if (!(current.getBlock() instanceof FlowerPotBlock)) {
+				continue;
+			}
+			boolean cravingPot = i == CRAVING_POTS[0] || i == CRAVING_POTS[1];
+			Block wanted = cravingPot ? craving : POTS[i];
+			if (!current.is(wanted)) {
+				level.setBlock(pos, wanted.defaultBlockState(), Block.UPDATE_ALL);
+			}
 		}
 	}
 
@@ -323,7 +360,9 @@ public final class HiveInteriorBuilder {
 		level.setBlock(exit.above(), ModBlocks.HIVE_EXIT.defaultBlockState(), FLAGS);
 	}
 
-	private static void spawnResidents(final ServerLevel level, final int index) {
+	private static void spawnResidents(final ServerLevel level, final int index, final @Nullable UUID founder) {
+		int guards = founder != null ? GRAND_GUARD_BEES : GUARD_BEES;
+		int workers = founder != null ? GRAND_WORKER_BEES : WORKER_BEES;
 		BlockPos c = HiveLayout.center(index);
 		BlockPos throne = HiveLayout.throne(index);
 		int floorY = HiveLayout.floorY();
@@ -336,15 +375,18 @@ public final class HiveInteriorBuilder {
 			queen.setHomeTo(throne, 2);
 			queen.setPersistenceRequired();
 			queen.addTag(RESIDENT_TAG);
+			if (founder != null) {
+				queen.setFounder(founder);
+			}
 			level.addFreshEntity(queen);
 		}
 
-		for (int i = 0; i < GUARD_BEES; i++) {
+		for (int i = 0; i < guards; i++) {
 			GuardBee guard = ModEntities.GUARD_BEE.create(level, EntitySpawnReason.STRUCTURE);
 			if (guard == null) {
 				continue;
 			}
-			double angle = i * Math.PI * 2 / GUARD_BEES;
+			double angle = i * Math.PI * 2 / guards;
 			guard.snapTo(c.getX() + 0.5 + Math.cos(angle) * 8, floorY + 3, c.getZ() + 0.5 + Math.sin(angle) * 8, (float)Math.toDegrees(angle) + 90.0F, 0.0F);
 			guard.setHomeTo(c, 20);
 			guard.setPersistenceRequired();
@@ -352,7 +394,7 @@ public final class HiveInteriorBuilder {
 			level.addFreshEntity(guard);
 		}
 
-		for (int i = 0; i < WORKER_BEES; i++) {
+		for (int i = 0; i < workers; i++) {
 			Bee bee = EntityTypes.BEE.create(level, EntitySpawnReason.STRUCTURE);
 			if (bee == null) {
 				continue;
