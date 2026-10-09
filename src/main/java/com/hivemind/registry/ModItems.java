@@ -3,6 +3,7 @@ package com.hivemind.registry;
 import com.hivemind.Hivemind;
 import com.hivemind.item.BeeMultitoolItem;
 import com.hivemind.item.BeenadeItem;
+import com.hivemind.item.RoyalEggItem;
 import java.util.function.Function;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -115,6 +116,8 @@ public final class ModItems {
 		"bee_multitool", BeeMultitoolItem::new, BeeMultitoolItem.properties().rarity(Rarity.RARE).repairable(ROYAL_JELLY)
 	);
 
+	public static final Item ROYAL_EGG = register("royal_egg", RoyalEggItem::new, new Item.Properties().stacksTo(1).rarity(Rarity.EPIC));
+
 	public static final CreativeModeTab TAB = Registry.register(
 		BuiltInRegistries.CREATIVE_MODE_TAB,
 		Hivemind.id("hivemind"),
@@ -135,6 +138,7 @@ public final class ModItems {
 				output.accept(BEE_GREAVES);
 				output.accept(BEE_BOOTS);
 				output.accept(BEE_MULTITOOL);
+				output.accept(ROYAL_EGG);
 				output.accept(BROOD_CELL);
 				output.accept(GUARD_BEE_SPAWN_EGG);
 				output.accept(QUEEN_BEE_SPAWN_EGG);

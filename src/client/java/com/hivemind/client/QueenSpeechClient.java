@@ -51,7 +51,8 @@ public final class QueenSpeechClient {
 
 	public static void init() {
 		ClientPlayNetworking.registerGlobalReceiver(QueenSpeechPayload.TYPE, (payload, context) -> {
-			Speech speech = new Speech(payload.queenId(), I18n.get(payload.key()), payload.addressed(), payload.favor(), payload.log());
+			String text = payload.arg().isEmpty() ? I18n.get(payload.key()) : I18n.get(payload.key(), I18n.get(payload.arg()));
+			Speech speech = new Speech(payload.queenId(), text, payload.addressed(), payload.favor(), payload.log());
 			ACTIVE.put(payload.queenId(), speech);
 		});
 		ClientTickEvents.END_CLIENT_TICK.register(QueenSpeechClient::tick);

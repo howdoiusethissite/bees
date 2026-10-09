@@ -27,15 +27,26 @@ public class HiveData extends SavedData {
 	/**
 	 * @param version which interior layout this hive was built with. Older hives get the newer
 	 *                features added the next time someone goes in; see {@link HiveInteriorBuilder#upgrade}.
+	 *                0 means the interior hasn't been built yet.
+	 * @param founder for a grand hive grown from a royal egg, the player who planted it
 	 */
-	public record Hive(int index, ResourceKey<Level> originLevel, BlockPos originPos, int version) {
+	public record Hive(int index, ResourceKey<Level> originLevel, BlockPos originPos, int version, Optional<UUID> founder) {
 		public static final Codec<Hive> CODEC = RecordCodecBuilder.create(i -> i.group(
 				Codec.INT.fieldOf("index").forGetter(Hive::index),
 				Level.RESOURCE_KEY_CODEC.fieldOf("origin_level").forGetter(Hive::originLevel),
 				BlockPos.CODEC.fieldOf("origin_pos").forGetter(Hive::originPos),
 				// Hives saved before versions existed are version 1.
-				Codec.INT.optionalFieldOf("version", 1).forGetter(Hive::version)
+				Codec.INT.optionalFieldOf("version", 1).forGetter(Hive::version),
+				UUIDUtil.STRING_CODEC.optionalFieldOf("founder").forGetter(Hive::founder)
 			).apply(i, Hive::new));
+
+		public boolean isGrand() {
+			return this.founder.isPresent();
+		}
+
+		public boolean isBuilt() {
+			return this.version > 0;
+		}
 	}
 
 	public record ReturnPoint(ResourceKey<Level> level, Vec3 pos, float yRot) {
@@ -73,18 +84,42 @@ public class HiveData extends SavedData {
 	}
 
 	/** Finds the hive record for a block in the outside world, or creates a new one. */
-	public Hive getOrCreate(final ResourceKey<Level> level, final BlockPos pos, final boolean[] created) {
+	public Hive getOrCreate(final ResourceKey<Level> level, final BlockPos pos) {
 		for (Hive hive : this.hives) {
 			if (hive.originLevel().equals(level) && hive.originPos().equals(pos)) {
-				created[0] = false;
 				return hive;
 			}
 		}
-		Hive hive = new Hive(this.hives.size(), level, pos.immutable(), HiveInteriorBuilder.LAYOUT_VERSION);
+		// Version 0: the interior gets built when the player goes in.
+		Hive hive = new Hive(this.hives.size(), level, pos.immutable(), 0, Optional.empty());
 		this.hives.add(hive);
 		this.setDirty();
-		created[0] = true;
 		return hive;
+	}
+
+	/** Records a grand hive grown from a royal egg at {@code pos}. Its interior is built the first time someone goes in. */
+	public Hive createGrand(final ResourceKey<Level> level, final BlockPos pos, final UUID founder) {
+		Hive hive = new Hive(this.hives.size(), level, pos.immutable(), 0, Optional.of(founder));
+		this.hives.add(hive);
+		this.setDirty();
+		return hive;
+	}
+
+	/** The grand hive whose outside sits around {@code pos}, if there is one. */
+	public Optional<Hive> findGrand(final ResourceKey<Level> level, final BlockPos pos, final int range) {
+		Hive best = null;
+		double bestDist = Double.MAX_VALUE;
+		for (Hive hive : this.hives) {
+			if (!hive.isGrand() || !hive.originLevel().equals(level)) {
+				continue;
+			}
+			double dist = hive.originPos().distSqr(pos);
+			if (dist <= range * range && dist < bestDist) {
+				best = hive;
+				bestDist = dist;
+			}
+		}
+		return Optional.ofNullable(best);
 	}
 
 	public Optional<Hive> byIndex(final int index) {
@@ -93,7 +128,7 @@ public class HiveData extends SavedData {
 
 	/** Records that a hive's interior has been brought up to the current layout. */
 	public Hive markUpgraded(final Hive hive) {
-		Hive upgraded = new Hive(hive.index(), hive.originLevel(), hive.originPos(), HiveInteriorBuilder.LAYOUT_VERSION);
+		Hive upgraded = new Hive(hive.index(), hive.originLevel(), hive.originPos(), HiveInteriorBuilder.LAYOUT_VERSION, hive.founder());
 		this.hives.set(hive.index(), upgraded);
 		this.setDirty();
 		return upgraded;

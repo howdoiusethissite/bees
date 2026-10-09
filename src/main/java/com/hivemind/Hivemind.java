@@ -32,6 +32,7 @@ public class Hivemind implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
+		HivemindConfig.load();
 		ModEffects.init();
 		ModSounds.init();
 		ModComponents.init();

@@ -992,6 +992,57 @@ def honey_bucket():
     t.save(os.path.join(ASSETS, "item", "honey_bucket.png"))
 
 
+def royal_egg():
+    # A pearly violet egg with a little gold crown band.
+    SPRITE_PALETTE.update({
+        "M": hexc("#b79be8"),  # egg
+        "m": hexc("#8a6cc4"),  # egg shade
+        "N": hexc("#e6dafc"),  # egg highlight
+    })
+    sprite("royal_egg", [
+        "................",
+        "......KKKK......",
+        ".....KNNMMK.....",
+        "....KNNMMMmK....",
+        "....KNMMMMmK....",
+        "...KNMMMMMMmK...",
+        "...KAYAYAYAaK...",
+        "...KYLYYYYYyK...",
+        "...KMMMMMMMmK...",
+        "...KMMMMMMmmK...",
+        "...KMMMMMMmmK...",
+        "....KMMMMmmK....",
+        "....KmMMmmmK....",
+        ".....KKmmKK.....",
+        "......KKKK......",
+        "................",
+    ])
+
+
+def royal_cradle():
+    # Waxy honeycomb cradle with a violet egg glowing through the middle.
+    t = Tex(16, 16)
+    WAX = hexc("#e8a72a")
+    WAX_D = hexc("#a96d12")
+    WAX_L = hexc("#ffd36b")
+    EGG = hexc("#b79be8")
+    EGG_L = hexc("#e6dafc")
+    for y in range(16):
+        for x in range(16):
+            cx = (x + (4 if (y // 4) % 2 else 0)) % 8 - 3.5
+            cy = y % 4 - 1.5
+            d = abs(cx) * 0.5 + abs(cy)
+            c = WAX_L if d < 1.0 else WAX if d < 2.2 else WAX_D
+            t.set(x, y, jitter(c, 6))
+    for y in range(4, 13):
+        for x in range(5, 11):
+            ex = (x - 7.5) / 3.0
+            ey = (y - 8.5) / 4.6
+            if ex * ex + ey * ey <= 1.0:
+                t.set(x, y, jitter(EGG_L if ex < -0.2 and ey < -0.1 else EGG, 4))
+    t.save(os.path.join(ASSETS, "block", "royal_cradle.png"))
+
+
 if __name__ == "__main__":
     queen()
     guard_gear()
@@ -1013,4 +1064,6 @@ if __name__ == "__main__":
     empty_brood_cell()
     honey_fluid()
     honey_bucket()
+    royal_egg()
+    royal_cradle()
     print("textures written")

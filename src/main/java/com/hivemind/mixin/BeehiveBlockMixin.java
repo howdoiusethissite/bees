@@ -1,7 +1,9 @@
 package com.hivemind.mixin;
 
 import com.hivemind.registry.ModItems;
+import com.hivemind.world.HiveHoney;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -21,9 +23,13 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-/** An empty bucket on a full beehive scoops out a bucket of liquid honey, the same way a bottle gets a honey bottle. */
+/**
+ * An empty bucket on a full beehive scoops out a bucket of liquid honey, the same way a bottle gets a honey bottle.
+ * Shears and bottles on a full hive also pay out a bonus that grows with the honey the hive has kept in reserve.
+ */
 @Mixin(BeehiveBlock.class)
 public abstract class BeehiveBlockMixin {
 	@Shadow
@@ -44,7 +50,7 @@ public abstract class BeehiveBlockMixin {
 	public abstract void resetHoneyLevel(Level level, BlockState state, BlockPos pos);
 
 	@Inject(method = "useItemOn", at = @At("HEAD"), cancellable = true)
-	private void hivemind$bucketHoney(
+	private void hivemind$harvestHoney(
 		final ItemStack itemStack,
 		final BlockState state,
 		final Level level,
@@ -54,8 +60,26 @@ public abstract class BeehiveBlockMixin {
 		final BlockHitResult hitResult,
 		final CallbackInfoReturnable<InteractionResult> cir
 	) {
-		if (!itemStack.is(Items.BUCKET) || state.getValue(BeehiveBlock.HONEY_LEVEL) < BeehiveBlock.MAX_HONEY_LEVELS) {
+		if (state.getValue(BeehiveBlock.HONEY_LEVEL) < BeehiveBlock.MAX_HONEY_LEVELS) {
 			return;
+		}
+		// Vanilla takes it from here for shears and bottles (and then resets the hive, which clears the reserve).
+		if (level instanceof ServerLevel serverLevel && itemStack.is(Items.SHEARS)) {
+			HiveHoney.dropBonusHoneycomb(serverLevel, pos, HiveHoney.bonusHoneycomb(HiveHoney.reserve(level, pos)));
+			return;
+		}
+		if (itemStack.is(Items.GLASS_BOTTLE)) {
+			if (!level.isClientSide()) {
+				HiveHoney.giveBonusBottles(player, HiveHoney.bonusBottles(HiveHoney.reserve(level, pos)));
+			}
+			return;
+		}
+		if (!itemStack.is(Items.BUCKET)) {
+			return;
+		}
+		if (!level.isClientSide()) {
+			// The bucket holds the visible honey; anything in reserve comes out as bottles.
+			HiveHoney.giveBonusBottles(player, HiveHoney.reserveBottles(HiveHoney.reserve(level, pos)));
 		}
 		level.playSound(player, player.getX(), player.getY(), player.getZ(), SoundEvents.BUCKET_FILL, SoundSource.BLOCKS, 1.0F, 0.8F);
 		player.setItemInHand(hand, ItemUtils.createFilledResult(itemStack, player, new ItemStack(ModItems.HONEY_BUCKET)));
@@ -69,5 +93,10 @@ public abstract class BeehiveBlockMixin {
 			this.resetHoneyLevel(level, state, pos);
 		}
 		cir.setReturnValue(InteractionResult.SUCCESS);
+	}
+
+	@Inject(method = "resetHoneyLevel", at = @At("HEAD"))
+	private void hivemind$clearReserve(final Level level, final BlockState state, final BlockPos pos, final CallbackInfo ci) {
+		HiveHoney.clear(level, pos);
 	}
 }

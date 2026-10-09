@@ -5,8 +5,10 @@ import com.hivemind.block.EmptyBroodCellBlock;
 import com.hivemind.network.QueenSpeechPayload;
 import com.hivemind.registry.ModBlocks;
 import com.hivemind.world.HiveEvents;
+import com.hivemind.world.HiveInfluence;
 import com.hivemind.world.HiveLayout;
 import com.hivemind.world.HiveRaids;
+import com.hivemind.world.QueenCravings;
 import com.mojang.serialization.Codec;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -48,6 +50,7 @@ import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.ValueInput;
@@ -65,20 +68,26 @@ import org.jspecify.annotations.Nullable;
 public class QueenBee extends PathfinderMob {
 	public static final ResourceKey<LootTable> GIFT_LOOT = ResourceKey.create(Registries.LOOT_TABLE, Hivemind.id("gameplay/queen_gift"));
 	public static final ResourceKey<LootTable> DEFENSE_LOOT = ResourceKey.create(Registries.LOOT_TABLE, Hivemind.id("gameplay/queen_defense_reward"));
+	/** Rolled once on top of the usual gift when you bring her the flower she's craving. */
+	public static final ResourceKey<LootTable> CRAVING_LOOT = ResourceKey.create(Registries.LOOT_TABLE, Hivemind.id("gameplay/queen_craving_gift"));
 	private static final Codec<Map<UUID, Integer>> FAVOR_CODEC = Codec.unboundedMap(UUIDUtil.STRING_CODEC, Codec.INT);
 	/** Minimum time between flower gifts for one player, so a stack of dandelions isn't a stack of emeralds. */
 	private static final int GIFT_COOLDOWN = 20 * 30;
 	private static final int FLOWERS_PER_GIFT = 3;
 	private static final int FAVOR_PER_EXTRA_ROLL = 15;
 	private static final int MAX_GIFT_ROLLS = 3;
+	/** The flower she's craving always earns a gift, on a shorter cooldown, with this many extra rolls. */
+	private static final int CRAVING_GIFT_COOLDOWN = 20 * 10;
+	private static final int CRAVING_EXTRA_ROLLS = 2;
 
 	/** How many lines the queen has for each occasion. Lines live in the lang file as {@code queen.hivemind.<topic>.<n>}. */
 	private static final Map<String, Integer> LINES = Map.ofEntries(
 		Map.entry("greet", 5), Map.entry("flower", 5), Map.entry("gift", 4), Map.entry("angry", 3), Map.entry("warn", 3), Map.entry("idle", 6),
-		Map.entry("cocoon", 4), Map.entry("escort_no", 3), Map.entry("nursery", 4), Map.entry("raid_start", 3), Map.entry("raid_won", 3), Map.entry("raid_lost", 3)
+		Map.entry("cocoon", 4), Map.entry("escort_no", 3), Map.entry("nursery", 4), Map.entry("raid_start", 3), Map.entry("raid_won", 3), Map.entry("raid_lost", 3),
+		Map.entry("craving", 4), Map.entry("craving_gift", 4), Map.entry("royal_egg", 2), Map.entry("founder", 3)
 	);
 	/** Lines that always get said (never skipped for being too soon after the last one) and are kept in the chat log. */
-	private static final Set<String> IMPORTANT = Set.of("gift", "raid_start", "raid_won", "raid_lost");
+	private static final Set<String> IMPORTANT = Set.of("gift", "craving_gift", "royal_egg", "raid_start", "raid_won", "raid_lost");
 	/** Small talk is skipped if she said something less than this long ago, so a handful of flowers isn't a handful of lines. */
 	private static final int SMALL_TALK_GAP = 20 * 6;
 	private static final double SPEECH_RANGE = 24.0;
@@ -97,6 +106,8 @@ public class QueenBee extends PathfinderMob {
 
 	private final Map<UUID, Integer> favor = new HashMap<>();
 	private final Map<UUID, Long> lastGift = new HashMap<>();
+	/** The player who founded this queen's hive from a royal egg, if anyone. She adores them. */
+	private @Nullable UUID founder;
 	private int idleChatCooldown = IDLE_CHAT_MIN;
 	private long lastSpoke = Long.MIN_VALUE / 2;
 	private int nurseryCooldown = 20 * 20;
@@ -134,11 +145,40 @@ public class QueenBee extends PathfinderMob {
 	}
 
 	public int getFavor(final Player player) {
-		return this.favor.getOrDefault(player.getUUID(), 0);
+		int favor = this.favor.getOrDefault(player.getUUID(), 0);
+		return player.getUUID().equals(this.founder) ? Math.max(favor, HiveInfluence.MAX_INFLUENCE) : favor;
 	}
 
 	public void adjustFavor(final Player player, final int amount) {
-		this.favor.merge(player.getUUID(), amount, Integer::sum);
+		this.favor.put(player.getUUID(), this.getFavor(player) + amount);
+		if (amount > 0) {
+			HiveInfluence.onFavor(this, player, this.getFavor(player));
+		}
+	}
+
+	public void setFounder(final UUID founder) {
+		this.founder = founder;
+	}
+
+	public boolean isFounder(final Player player) {
+		return player.getUUID().equals(this.founder);
+	}
+
+	/** The hive this queen lives in. Queens placed by hand outside a hive still get a stable number from where they are. */
+	private int hiveIndex() {
+		return HiveLayout.indexAt(this.position());
+	}
+
+	/** The flower she's craving at the moment. */
+	public Item cravedFlower(final ServerLevel level) {
+		return QueenCravings.cravedItem(level.getServer(), this.hiveIndex());
+	}
+
+	/** Mentions the flower she's craving. */
+	public void sayCraving(final @Nullable Player listener, final String topic, final int favor) {
+		if (this.level() instanceof ServerLevel level) {
+			this.say(listener, topic, favor, this.cravedFlower(level).getDescriptionId());
+		}
 	}
 
 	@Override
@@ -153,7 +193,13 @@ public class QueenBee extends PathfinderMob {
 
 		if (held.isEmpty() && hand == InteractionHand.MAIN_HAND) {
 			if (!this.level().isClientSide()) {
-				this.say(player, "greet", this.getFavor(player));
+				if (this.isFounder(player) && this.random.nextInt(3) == 0) {
+					this.say(player, "founder", this.getFavor(player));
+				} else if (this.random.nextBoolean()) {
+					this.sayCraving(player, "craving", this.getFavor(player));
+				} else {
+					this.say(player, "greet", this.getFavor(player));
+				}
 			}
 			return InteractionResult.SUCCESS;
 		}
@@ -161,15 +207,27 @@ public class QueenBee extends PathfinderMob {
 	}
 
 	private void acceptFlower(final ServerLevel level, final Player player, final ItemStack flower) {
+		boolean craved = flower.is(this.cravedFlower(level));
 		flower.consume(1, player);
-		this.adjustFavor(player, 1);
+		this.adjustFavor(player, craved ? QueenCravings.FAVOR : 1);
 		int favor = this.getFavor(player);
 
-		level.sendParticles(ParticleTypes.HEART, this.getX(), this.getEyeY() + 0.4, this.getZ(), 3, 0.3, 0.2, 0.3, 0.0);
-		level.playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.BEE_POLLINATE, SoundSource.NEUTRAL, 1.0F, 0.8F);
+		level.sendParticles(ParticleTypes.HEART, this.getX(), this.getEyeY() + 0.4, this.getZ(), craved ? 8 : 3, 0.3, 0.2, 0.3, 0.0);
+		level.playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.BEE_POLLINATE, SoundSource.NEUTRAL, 1.0F, craved ? 1.2F : 0.8F);
 
 		long now = level.getGameTime();
 		long last = this.lastGift.getOrDefault(player.getUUID(), Long.MIN_VALUE / 2);
+		if (craved && now - last >= CRAVING_GIFT_COOLDOWN) {
+			// Just what she wanted. A gift every time, and a much bigger one.
+			this.lastGift.put(player.getUUID(), now);
+			int rolls = Math.min(MAX_GIFT_ROLLS, 1 + favor / FAVOR_PER_EXTRA_ROLL) + CRAVING_EXTRA_ROLLS;
+			for (int i = 0; i < rolls; i++) {
+				this.giveGift(level, player, GIFT_LOOT);
+			}
+			this.giveGift(level, player, CRAVING_LOOT);
+			this.sayCraving(player, "craving_gift", favor);
+			return;
+		}
 		boolean dueGift = favor > 0 && favor % FLOWERS_PER_GIFT == 0;
 		if (dueGift && now - last >= GIFT_COOLDOWN) {
 			this.lastGift.put(player.getUUID(), now);
@@ -234,6 +292,11 @@ public class QueenBee extends PathfinderMob {
 	 * Players without the mod installed just get the line as text.
 	 */
 	public void say(final @Nullable Player listener, final String topic, final int favor) {
+		this.say(listener, topic, favor, "");
+	}
+
+	/** @param arg a translation key for the line's {@code %s}, or empty if it has none */
+	public void say(final @Nullable Player listener, final String topic, final int favor, final String arg) {
 		if (!(this.level() instanceof ServerLevel level)) {
 			return;
 		}
@@ -251,9 +314,10 @@ public class QueenBee extends PathfinderMob {
 			}
 			boolean addressed = listener == null || listener == player;
 			if (ServerPlayNetworking.canSend(player, QueenSpeechPayload.TYPE)) {
-				ServerPlayNetworking.send(player, new QueenSpeechPayload(this.getId(), key, addressed, addressed ? favor : -1, important));
+				ServerPlayNetworking.send(player, new QueenSpeechPayload(this.getId(), key, addressed, addressed ? favor : -1, important, arg));
 			} else if (addressed) {
-				MutableComponent line = Component.translatable("queen.hivemind.speaker", Component.translatable(key)).withStyle(ChatFormatting.GOLD);
+				Component text = arg.isEmpty() ? Component.translatable(key) : Component.translatable(key, Component.translatable(arg));
+				MutableComponent line = Component.translatable("queen.hivemind.speaker", text).withStyle(ChatFormatting.GOLD);
 				if (favor >= 0) {
 					line.append(Component.translatable("queen.hivemind.favor", favor).withStyle(ChatFormatting.GRAY));
 				}
@@ -275,7 +339,11 @@ public class QueenBee extends PathfinderMob {
 			this.idleChatCooldown = Mth.nextInt(this.random, IDLE_CHAT_MIN, IDLE_CHAT_MAX);
 			Player near = level.getNearestPlayer(this, IDLE_CHAT_RANGE);
 			if (near != null && !near.isSpectator() && !raid) {
-				this.say(near, "idle");
+				if (this.random.nextInt(3) == 0) {
+					this.sayCraving(near, "craving", -1);
+				} else {
+					this.say(near, "idle");
+				}
 			}
 		}
 		if (this.nurseryCooldown > 0) {
@@ -480,6 +548,7 @@ public class QueenBee extends PathfinderMob {
 	protected void addAdditionalSaveData(final ValueOutput output) {
 		super.addAdditionalSaveData(output);
 		output.store("favor", FAVOR_CODEC, Map.copyOf(this.favor));
+		output.storeNullable("founder", UUIDUtil.CODEC, this.founder);
 	}
 
 	@Override
@@ -487,6 +556,7 @@ public class QueenBee extends PathfinderMob {
 		super.readAdditionalSaveData(input);
 		this.favor.clear();
 		input.read("favor", FAVOR_CODEC).ifPresent(this.favor::putAll);
+		this.founder = input.read("founder", UUIDUtil.CODEC).orElse(null);
 		// Queens from before she could walk saved a movement speed of zero.
 		AttributeInstance speed = this.getAttribute(Attributes.MOVEMENT_SPEED);
 		if (speed != null && speed.getBaseValue() < WALK_SPEED) {

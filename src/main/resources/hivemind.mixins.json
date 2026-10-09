@@ -3,8 +3,12 @@
 	"package": "com.hivemind.mixin",
 	"compatibilityLevel": "JAVA_25",
 	"mixins": [
+		"BeeAccessor",
 		"BeeMixin",
+		"BeePollinateGoalMixin",
+		"BeehiveBlockEntityMixin",
 		"BeehiveBlockMixin",
+		"BeehiveOccupantMixin",
 		"PlayerMixin",
 		"ServerGamePacketListenerImplMixin"
 	],
